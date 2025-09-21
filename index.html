@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dave | Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            cursor: none; /* Hide the default system cursor */
+        }
+
+        /* Custom cursor styling */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #8b5cf6;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
+            mix-blend-mode: difference;
+        }
+        .cursor-pointer {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(139, 92, 246, 0.5);
+        }
+
+        /* Hero image section */
+        .home-img {
+            box-shadow: 0px 0px 52px -15px rgba(139, 92, 246, 0.5);
+        }
+
+        .skill-icon {
+            width: 4rem; /* 64px */
+            height: 4rem; /* 64px */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .skill-icon img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-gray-100 transition-colors duration-500">
+    <!-- Custom Cursor -->
+    <div class="cursor hidden md:block"></div>
+
+    <!-- Message at the top of the page for clipboard copy action -->
+    <div id="top-copy-msg" class="fixed top-8 left-1/2 -translate-x-1/2 bg-zinc-700 text-white text-sm px-4 py-2 rounded-md shadow-lg opacity-0 transition-opacity duration-300 z-[60]">
+        Copied to clipboard!
+    </div>
+
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-center py-6 px-4 md:px-12 fixed w-full top-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md">
+        <a href="#" class="text-3xl font-bold text-purple-600">Dave.</a>
+        <nav class="mt-4 md:mt-0">
+            <a href="#home" class="px-4 py-2 hover:text-purple-600 rounded-md transition-all duration-300">Home</a>
+            <a href="#about" class="px-4 py-2 hover:text-purple-600 rounded-md transition-all duration-300">About</a>
+            <a href="#skills" class="px-4 py-2 hover:text-purple-600 rounded-md transition-all duration-300">Skills</a>
+            <a href="#education" class="px-4 py-2 hover:text-purple-600 rounded-md transition-all duration-300">Education</a>
+            <a href="#projects" class="px-4 py-2 hover:text-purple-600 rounded-md transition-all duration-300">Projects</a>
+            <a href="#contact" class="px-4 py-2 hover:text-purple-600 rounded-md transition-all duration-300">Contact</a>
+        </nav>
+        <button id="theme-toggle" class="mt-4 md:mt-0 p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-300">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+    </header>
+
+    <main class="pt-24">
+        <!-- Home Section -->
+        <section id="home" class="min-h-screen flex flex-col items-center justify-center py-12 px-4 md:px-12">
+            <div class="container mx-auto max-w-5xl flex flex-col md:flex-row items-center justify-center">
+                <div class="flex-1 max-w-lg text-center md:text-left mb-8 md:mb-0">
+                    <h1 class="text-5xl lg:text-6xl font-extrabold leading-tight">Hi, I'm <span class="text-purple-600">Dave</span></h1>
+                    <h3 class="mt-4 text-3xl font-semibold">I'm a <span id="typing-text" class="text-purple-500"></span></h3>
+                    <p class="mt-6 text-lg text-zinc-600 dark:text-zinc-400">
+                        A passionate student and aspiring developer based in Dubai. I am learning to build stunning and
+                        functional websites that solve real-world problems.
+                    </p>
+                    <div class="mt-8 flex justify-center md:justify-start space-x-4">
+                        <a href="#contact" class="px-6 py-3 font-semibold text-white bg-purple-600 rounded-full shadow-lg hover:bg-purple-700 transition-transform transform hover:-translate-y-1">
+                            Contact Me
+                        </a>
+                        <a href="#projects" class="px-6 py-3 font-semibold text-purple-600 border border-purple-600 rounded-full hover:bg-purple-600 hover:text-white transition-colors duration-300">
+                            View Projects
+                        </a>
+                    </div>
+                </div>
+                <div class="flex-1 flex justify-center mt-12 md:mt-0">
+                    <div class="w-80 h-80 md:w-96 md:h-96 rounded-full overflow-hidden home-img flex items-center justify-center text-center">
+                        <!-- Profile picture from direct link -->
+                        <img src="https://i.postimg.cc/DwfG6xB8/main.jpg" alt="Dave's Profile" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-20 md:py-32">
+            <div class="container mx-auto max-w-5xl">
+                <h2 class="text-4xl font-bold text-center mb-12">About Me</h2>
+                <div class="flex flex-col-reverse md:flex-row items-center md:space-x-12">
+                    <div class="flex-1 mt-8 md:mt-0">
+                        <p class="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+                            My name is Dave, and I'm a student developer with a passion for creating beautiful and intuitive user experiences. I love combining clean code with modern design to build websites that are both robust and easy to use.
+                        </p>
+                        <p class="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                            I am a lifelong learner and am always eager to take on new challenges and master new technologies.
+                        </p>
+                    </div>
+                    <div class="flex-none w-48 h-48 rounded-full overflow-hidden shadow-xl">
+                        <!-- Profile picture from direct link -->
+                        <img src="https://i.postimg.cc/DwfG6xB8/main.jpg" alt="Dave" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Education Section -->
+        <section id="education" class="py-20 md:py-32">
+            <div class="container mx-auto max-w-5xl">
+                <h2 class="text-4xl font-bold text-center mb-12">Education</h2>
+                <div class="space-y-6 text-center">
+                    <div class="bg-zinc-100 dark:bg-zinc-800 p-6 rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-semibold text-purple-600">Winchester School Jebel Ali</h3>
+                        <p class="text-zinc-600 dark:text-zinc-400 mt-2">Joined in 2015 - Present</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills" class="py-20 md:py-32 bg-zinc-100 dark:bg-zinc-800">
+            <div class="container mx-auto max-w-5xl">
+                <h2 class="text-4xl font-bold text-center mb-12">My Skills</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 text-center">
+                    <!-- Skill: HTML -->
+                    <div class="flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <div class="skill-icon mb-4">
+                            <i class="fa-brands fa-html5 text-4xl text-orange-500"></i>
+                        </div>
+                        <h4 class="font-semibold text-lg">HTML</h4>
+                    </div>
+                    <!-- Skill: CSS -->
+                    <div class="flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <div class="skill-icon mb-4">
+                            <i class="fa-brands fa-css3-alt text-4xl text-blue-500"></i>
+                        </div>
+                        <h4 class="font-semibold text-lg">CSS</h4>
+                    </div>
+                    <!-- Skill: JavaScript -->
+                    <div class="flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <div class="skill-icon mb-4">
+                            <i class="fa-brands fa-js-square text-4xl text-yellow-500"></i>
+                        </div>
+                        <h4 class="font-semibold text-lg">JavaScript</h4>
+                    </div>
+                    <!-- Skill: TypeScript -->
+                    <div class="flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <!-- TypeScript icon from direct link -->
+                        <div class="skill-icon mb-4">
+                            <img src="https://i.postimg.cc/CKkwqgkD/images-removebg-preview.png" alt="TypeScript Icon">
+                        </div>
+                        <h4 class="font-semibold text-lg">TypeScript</h4>
+                    </div>
+                    <!-- Skill: Python -->
+                    <div class="flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <div class="skill-icon mb-4">
+                            <i class="fa-brands fa-python text-4xl text-yellow-400"></i>
+                        </div>
+                        <h4 class="font-semibold text-lg">Python</h4>
+                    </div>
+                    <!-- Skill: C# -->
+                    <div class="flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        <!-- C# Icon from direct link -->
+                        <div class="skill-icon mb-4">
+                            <img src="https://i.postimg.cc/HkFNX89v/image-removebg-preview-1.png" alt="C# Icon">
+                        </div>
+                        <h4 class="font-semibold text-lg">C#</h4>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="py-20 md:py-32">
+            <div class="container mx-auto max-w-5xl">
+                <h2 class="text-4xl font-bold text-center mb-12">My Projects</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Project Card 1: This Website -->
+                    <div class="bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                        <!-- Updated project image from direct link -->
+                        <img src="https://i.postimg.cc/T2rQHHq9/image.png" alt="This Website" class="w-full h-64 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-2">My Portfolio Website</h3>
+                            <p class="text-zinc-600 dark:text-zinc-400">A personal portfolio built from scratch using modern web technologies. It showcases my skills, education, and projects with a responsive design and interactive features.</p>
+                            <a href="#home" class="inline-block mt-4 px-4 py-2 text-sm font-semibold text-purple-600 border border-purple-600 rounded-full hover:bg-purple-600 hover:text-white transition-colors duration-300">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Project Card 2: Cubic Executor -->
+                    <div class="bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                        <!-- Cubic Executor image from direct link -->
+                        <img src="https://i.postimg.cc/6p8S8fnG/image.png" alt="Cubic Executor" class="w-full h-64 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-2">Cubic: A Script Executor</h3>
+                            <p class="text-zinc-600 dark:text-zinc-400">An executor for launching scripts onto programs. A tool designed to automate tasks and streamline workflows, built with a focus on performance and ease of use.</p>
+                            <a href="#" class="inline-block mt-4 px-4 py-2 text-sm font-semibold text-purple-600 border border-purple-600 rounded-full hover:bg-purple-600 hover:text-white transition-colors duration-300">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-20 md:py-32 bg-zinc-100 dark:bg-zinc-800">
+            <div class="container mx-auto max-w-4xl text-center">
+                <h2 class="text-4xl font-bold mb-4">Get In Touch</h2>
+                <p class="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
+                    Have a project in mind or just want to say hi? Feel free to reach out!
+                </p>
+                <form id="contact-form" action="https://formspree.io/f/xldprewy" method="POST" class="space-y-4">
+                    <input type="text" name="name" placeholder="Your Name" class="w-full p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <input type="email" name="email" placeholder="Your Email" class="w-full p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <textarea name="message" placeholder="Your Message" rows="5" class="w-full p-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+                    <button type="submit" class="w-full py-3 font-semibold text-white bg-purple-600 rounded-lg shadow-lg hover:bg-purple-700 transition-colors duration-300">
+                        Send Message
+                    </button>
+                    <div id="form-message" class="mt-4 text-center hidden"></div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-8 text-center text-zinc-500 dark:text-zinc-400">
+        <div class="flex justify-center items-center space-x-6 mb-4 text-2xl">
+            <!-- GitHub Link -->
+            <a href="https://github.com/davey26171" target="_blank" aria-label="GitHub" class="hover:text-purple-600 transition-colors duration-300"><i class="fa-brands fa-github"></i></a>
+            <!-- Discord Link -->
+            <a href="#" id="discord-copy-btn" aria-label="Discord" class="hover:text-purple-600 transition-colors duration-300 relative">
+                <i class="fa-brands fa-discord"></i>
+            </a>
+            <!-- NameMC Link -->
+            <a href="https://namemc.com/profile/dxvefr.1" target="_blank" aria-label="NameMC" class="hover:text-purple-600 transition-colors duration-300 flex items-center justify-center space-x-2">
+                <!-- NameMC SVG Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-2.825 8.75l-2.025 2.5h-2.15l3.225-4h2.15l-3.225 4zM12 12c-1.375 0-2.5-1.125-2.5-2.5s1.125-2.5 2.5-2.5 2.5 1.125 2.5 2.5-1.125 2.5-2.5 2.5zm4.825 2.75l2.025-2.5h2.15l-3.225 4h-2.15l3.225-4z"/>
+                </svg>
+            </a>
+        </div>
+        <p>&copy; 2025 Dave. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Typing Text Effect
+            const typingTextEl = document.getElementById('typing-text');
+            const words = ['Student', 'Developer', 'Designer'];
+            let wordIndex = 0;
+            let charIndex = 0;
+
+            const type = () => {
+                if (wordIndex < words.length) {
+                    const currentWord = words[wordIndex];
+                    if (charIndex < currentWord.length) {
+                        typingTextEl.textContent += currentWord.charAt(charIndex);
+                        charIndex++;
+                        setTimeout(type, 100);
+                    } else {
+                        setTimeout(erase, 1500);
+                    }
+                }
+            };
+
+            const erase = () => {
+                const currentWord = words[wordIndex];
+                if (charIndex > 0) {
+                    typingTextEl.textContent = currentWord.substring(0, charIndex - 1);
+                    charIndex--;
+                    setTimeout(erase, 50);
+                } else {
+                    wordIndex++;
+                    if (wordIndex >= words.length) {
+                        wordIndex = 0;
+                    }
+                    setTimeout(type, 500);
+                }
+            };
+
+            type();
+
+            // Theme Switcher
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            themeToggleBtn.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                const isDark = document.documentElement.classList.contains('dark');
+                themeToggleBtn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+            });
+
+            // Custom Cursor
+            const cursor = document.querySelector('.cursor');
+            document.addEventListener('mousemove', e => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
+
+            document.addEventListener('mouseover', e => {
+                if (e.target.closest('a') || e.target.closest('button')) {
+                    cursor.classList.add('cursor-pointer');
+                }
+            });
+
+            document.addEventListener('mouseout', e => {
+                if (e.target.closest('a') || e.target.closest('button')) {
+                    cursor.classList.remove('cursor-pointer');
+                }
+            });
+
+            // Smooth Scrolling for Navigation
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    const href = this.getAttribute('href');
+                    if (href === '#') {
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        e.preventDefault();
+                        document.querySelector(href).scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            // Handle Contact Form Submission
+            const form = document.getElementById('contact-form');
+            const formMessage = document.getElementById('form-message');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        formMessage.textContent = 'Message sent successfully! Thank you for reaching out.';
+                        formMessage.classList.remove('hidden', 'text-red-500');
+                        formMessage.classList.add('text-green-500');
+                        form.reset();
+                    } else {
+                        formMessage.textContent = 'Oops! There was a problem sending your message.';
+                        formMessage.classList.remove('hidden', 'text-green-500');
+                        formMessage.classList.add('text-red-500');
+                    }
+                } catch (error) {
+                    formMessage.textContent = 'Oops! An error occurred. Please try again later.';
+                    formMessage.classList.remove('hidden', 'text-green-500');
+                    formMessage.classList.add('text-red-500');
+                }
+            });
+
+            // Copy Discord Username to Clipboard
+            const discordButton = document.getElementById('discord-copy-btn');
+            const copyMsg = document.getElementById('top-copy-msg');
+            const discordUsername = 'k3stt';
+ 
+            discordButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Use the fallback method for compatibility with the Canvas iframe
+                const tempInput = document.createElement('input');
+                tempInput.value = discordUsername;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                // Show the copy message
+                copyMsg.classList.remove('opacity-0');
+                copyMsg.classList.add('opacity-100');
+                setTimeout(() => {
+                    copyMsg.classList.remove('opacity-100');
+                    copyMsg.classList.add('opacity-0');
+                }, 2000); // Hide after 2 seconds
+            });
+        });
+    </script>
+</body>
+</html>
