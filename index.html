@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Dave Jacob</title>
+    <title>Dave Jacob | Portfolio</title>
     
     <!-- FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,10 +18,15 @@
             --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
             --focus-col: 20vw;
             --row-height: 75px;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        /* Allow text selection ONLY in inputs */
+        input, textarea { user-select: text !important; cursor: text !important; }
+        
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: var(--font-main);
             background: #000;
             color: white;
             height: 100vh;
@@ -87,6 +92,7 @@
             background: rgba(255,255,255,0.05); color: #ccc;
             border-radius: 50px; font-size: 13px; letter-spacing: 2px;
             transition: all 0.3s var(--ease-out); cursor: pointer;
+            font-family: var(--font-main);
         }
         .boot-btn:active, .boot-btn:hover { background: white; color: black; box-shadow: 0 0 30px rgba(255,255,255,0.6); transform: scale(1.05); }
 
@@ -184,6 +190,7 @@
             border-left: 3px solid white;
             background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: relative;
         }
         .pop-title { font-size: 36px; font-weight: 300; margin-bottom: 25px; }
         .pop-content { font-size: 16px; line-height: 1.7; color: #ddd; }
@@ -193,68 +200,78 @@
             display: inline-block; width: 100%;
         }
 
-        /* --- MOBILE TOUCHPAD (Revised) --- */
+        /* --- CONTACT FORM --- */
+        .contact-form { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        
+        .contact-form input, 
+        .contact-form textarea {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: white; padding: 12px; border-radius: 8px; 
+            font-family: var(--font-main); /* FIX: Force Font */
+            font-size: 14px;
+            outline: none; transition: 0.3s;
+        }
+        
+        .contact-form input:focus, 
+        .contact-form textarea:focus {
+            background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4);
+        }
+        
+        .contact-form textarea { resize: none; height: 100px; }
+        
+        .contact-btn {
+            background: rgba(0, 255, 128, 0.1); color: #00ffaa;
+            border: 1px solid rgba(0, 255, 128, 0.3); padding: 12px;
+            border-radius: 8px; font-weight: 700; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
+            font-family: var(--font-main); /* FIX: Force Font */
+        }
+        .contact-btn:hover { background: rgba(0, 255, 128, 0.2); box-shadow: 0 0 15px rgba(0,255,128,0.2); }
+
+        /* MOBILE CONTROLS */
         #mobile-controls {
             display: none; position: fixed; bottom: 0; left: 0; width: 100%;
             height: 220px; z-index: 8000; pointer-events: none;
             background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
         }
-        
-        /* D-Pad Container */
         .d-pad {
             position: absolute; bottom: 30px; left: 30px;
             width: 160px; height: 160px; pointer-events: auto;
         }
-        
-        /* Direction Buttons (Glassy) */
         .d-btn {
             position: absolute; width: 50px; height: 50px;
-            background: rgba(255, 255, 255, 0.05); 
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 14px; 
-            display: flex; justify-content: center; align-items: center;
-            color: white; backdrop-filter: blur(10px);
-            transition: transform 0.1s;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 14px; display: flex; justify-content: center; align-items: center;
+            color: white; backdrop-filter: blur(10px); transition: transform 0.1s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         .d-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
         .d-btn svg { width: 24px; height: 24px; stroke: white; stroke-width: 2; }
-
-        /* Positioning */
         .d-up { top: 0; left: 55px; }
         .d-down { bottom: 0; left: 55px; }
         .d-left { top: 55px; left: 0; }
         .d-right { top: 55px; right: 0; }
         
-        /* Action Buttons */
         .action-btns {
             position: absolute; bottom: 40px; right: 30px;
             width: 140px; height: 80px; pointer-events: auto; 
             display: flex; gap: 20px; justify-content: flex-end; align-items: flex-end;
         }
-        
         .c-btn {
             width: 65px; height: 65px; border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            border: 1px solid rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            transition: transform 0.1s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+            transition: transform 0.1s; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .c-btn svg { width: 28px; height: 28px; stroke-width: 2.5; }
         .c-btn:active { transform: scale(0.9); }
-
-        /* Enter (Green Tint) */
         .btn-enter { background: rgba(0, 255, 128, 0.05); border-color: rgba(0, 255, 128, 0.3); }
         .btn-enter svg { stroke: #00ffaa; }
         .btn-enter:active { background: rgba(0, 255, 128, 0.2); box-shadow: 0 0 15px rgba(0,255,128,0.3); }
-
-        /* Back (Red Tint) */
         .btn-back { background: rgba(255, 50, 50, 0.05); border-color: rgba(255, 50, 50, 0.3); margin-bottom: 20px; }
         .btn-back svg { stroke: #ff5555; }
         .btn-back:active { background: rgba(255, 50, 50, 0.2); box-shadow: 0 0 15px rgba(255,50,50,0.3); }
 
-        /* MOBILE QUERY */
         @media (max-width: 768px) {
             :root { --focus-col: 20px; --row-height: 60px; }
             #mobile-controls { display: block; }
@@ -281,7 +298,7 @@
 
     <div id="boot-screen">
         <div class="boot-logo">Dave Jacob</div>
-        <div class="boot-btn">Enter...</div>
+        <div class="boot-btn">ENTER</div>
     </div>
 
     <div id="xmb-interface">
@@ -305,7 +322,9 @@
             </div>
         </div>
 
-        <!-- ITEMS -->
+        <!-- ITEMS LIST -->
+        
+        <!-- 0: USER -->
         <div class="item-column active-col" id="col-0">
             <div class="item-card selected" data-t="Dave Jacob" data-c="<strong>Dave Jacob</strong><br><br>Full Stack Developer specializing in C# backend architecture and Python automation tools.<br><br>I build scalable systems and interactive web experiences.">
                 <div class="item-icon">
@@ -313,8 +332,16 @@
                 </div>
                 <div class="item-text"><h3>Dave Jacob</h3><p>Profile & Bio</p></div>
             </div>
+            <!-- CONTACT CARD -->
+            <div class="item-card" id="contact-card" data-t="Contact Me" data-c="">
+                <div class="item-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                </div>
+                <div class="item-text"><h3>Contact</h3><p>Send a Message</p></div>
+            </div>
         </div>
 
+        <!-- 1: SKILLS -->
         <div class="item-column" id="col-1">
             <div class="item-card" data-t="Web Stack" data-c="HTML5, CSS3, JavaScript (ES6+), Web Audio API.">
                 <div class="item-icon">
@@ -381,45 +408,37 @@
     <div id="pop-page">
         <div class="pop-box">
             <h1 class="pop-title" id="pop-title">Title</h1>
-            <div class="pop-content" id="pop-content">Content</div>
+            <div id="pop-content" class="pop-content">Content</div>
             <div style="margin-top:20px; font-size:12px; color:#666; border-top:1px solid rgba(255,255,255,0.1); padding-top:15px;">[BACKSPACE / B] RETURN</div>
         </div>
     </div>
 
-    <!-- NEW MOBILE CONTROLS -->
+    <!-- MOBILE CONTROLS -->
     <div id="mobile-controls">
         <div class="d-pad">
-            <!-- Up -->
-            <div class="d-btn d-up" onclick="triggerKey('ArrowUp')">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-            </div>
-            <!-- Down -->
-            <div class="d-btn d-down" onclick="triggerKey('ArrowDown')">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </div>
-            <!-- Left -->
-            <div class="d-btn d-left" onclick="triggerKey('ArrowLeft')">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </div>
-            <!-- Right -->
-            <div class="d-btn d-right" onclick="triggerKey('ArrowRight')">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </div>
+            <div class="d-btn d-up" onclick="triggerKey('ArrowUp')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></div>
+            <div class="d-btn d-down" onclick="triggerKey('ArrowDown')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div class="d-btn d-left" onclick="triggerKey('ArrowLeft')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></div>
+            <div class="d-btn d-right" onclick="triggerKey('ArrowRight')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
         </div>
-
         <div class="action-btns">
-            <!-- Back (X) -->
-            <div class="c-btn btn-back" onclick="triggerKey('Backspace')">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-            </div>
-            <!-- Enter (Check) -->
-            <div class="c-btn btn-enter" onclick="triggerKey('Enter')">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
+            <div class="c-btn btn-back" onclick="triggerKey('Backspace')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>
+            <div class="c-btn btn-enter" onclick="triggerKey('Enter')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
         </div>
     </div>
 
     <script>
+        /* --- CONSTANTS --- */
+        const FORMSPREE_ENDPOINT = "https://formspree.io/f/xldprewy";
+
+        const CONTACT_FORM_HTML = `
+            <form id="contactForm" class="contact-form" onsubmit="handleFormSubmit(event)">
+                <input type="email" name="email" placeholder="Your Email" required autocomplete="off">
+                <textarea name="message" placeholder="Message..." required autocomplete="off"></textarea>
+                <button type="submit" class="contact-btn">Send Message</button>
+            </form>
+        `;
+
         /* --- STATE --- */
         let systemVol = 0.5;
         const bgMusic = new Audio('menu.mp3');
@@ -443,6 +462,39 @@
             document.querySelector('.toast-sub').innerText = sub;
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        /* --- CONTACT FORM HANDLING --- */
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = new FormData(form);
+            const btn = form.querySelector('button');
+            const originalText = btn.innerText;
+            
+            btn.innerText = "Sending...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(FORMSPREE_ENDPOINT, {
+                    method: 'POST',
+                    body: data,
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    showToast('Success', 'Message Sent');
+                    closePopup();
+                } else {
+                    showToast('Error', 'Failed to send');
+                    btn.innerText = "Try Again";
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                showToast('Error', 'Network Error');
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }
 
         /* --- BOOT SEQUENCE --- */
@@ -496,25 +548,34 @@
         document.addEventListener('keydown', (e) => {
             if(state === "SHUTDOWN") return;
 
+            // Allow typing in Contact Form without triggering Nav
+            if (state === "POPUP") {
+                const activeTag = document.activeElement.tagName;
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') {
+                    if (e.key === 'Escape') {
+                        document.activeElement.blur(); // Escape blur
+                        return;
+                    }
+                    return; // Stop nav logic so user can type
+                }
+            }
+
             // --- POPUP CONTROLS ---
             if(state === "POPUP") {
                 const activeCol = cols[catIndex];
                 const activeItem = activeCol.querySelectorAll('.item-card')[itemIndex];
 
-                // Close Popup
                 if(e.key === 'Backspace' || e.key === 'Escape') {
                     playTone('back');
                     closePopup();
                     return;
                 }
 
-                // Volume Control (Only if Audio Card)
                 if(activeItem.id === 'audio-settings-card') {
                     if(e.key === 'ArrowUp' || e.key === 'ArrowRight') adjustVolume(0.1);
                     if(e.key === 'ArrowDown' || e.key === 'ArrowLeft') adjustVolume(-0.1);
                 }
 
-                // Project Link (Only if Project Card + Space/Enter)
                 if((e.code === 'Space' || e.key === 'Enter') && activeItem.dataset.link) {
                     window.open(activeItem.dataset.link, '_blank');
                     showToast('Opening Link', 'GitHub');
@@ -565,9 +626,16 @@
         function openPopup(item) {
             state = "POPUP";
             document.getElementById('pop-title').innerHTML = item.dataset.t;
-            let content = item.dataset.c;
-            if(item.id === 'audio-settings-card') content = content.replace("50%", Math.round(systemVol*100) + "%");
-            document.getElementById('pop-content').innerHTML = content;
+            
+            // Special handling for Contact Card
+            if (item.id === 'contact-card') {
+                document.getElementById('pop-content').innerHTML = CONTACT_FORM_HTML;
+            } else {
+                let content = item.dataset.c;
+                if(item.id === 'audio-settings-card') content = content.replace("50%", Math.round(systemVol*100) + "%");
+                document.getElementById('pop-content').innerHTML = content;
+            }
+
             document.getElementById('xmb-interface').classList.add('blurred');
             pop.classList.add('open');
         }
@@ -632,7 +700,7 @@
                 }
             } catch(e) {}
         }
-        setInterval(fetchLastFm, 60000); // 60s Refresh
+        setInterval(fetchLastFm, 60000); 
 
         /* --- VISUALS --- */
         const canvas = document.getElementById('wave-canvas');
