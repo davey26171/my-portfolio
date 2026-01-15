@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Dave Jacob OS</title>
+    
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CORE SETTINGS --- */
+        :root {
+            --ease-out: cubic-bezier(0.19, 1, 0.22, 1); /* Smooth Apple-like easing */
+            --focus-col: 20vw;
+            --row-height: 75px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #000;
+            color: white;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            transition: opacity 1.5s ease;
+        }
+
+        /* --- SMOOTH CURSOR --- */
+        @media (pointer: fine) {
+            body { cursor: none; }
+            #cursor-dot, #cursor-ring {
+                position: fixed; top: 0; left: 0;
+                border-radius: 50%; pointer-events: none; z-index: 10000;
+                will-change: transform;
+            }
+            #cursor-dot {
+                width: 8px; height: 8px; background: white;
+                box-shadow: 0 0 10px rgba(255,255,255,0.8);
+            }
+            #cursor-ring {
+                width: 50px; height: 50px;
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                background: rgba(255, 255, 255, 0.02);
+                transition: width 0.3s var(--ease-out), height 0.3s var(--ease-out);
+                mix-blend-mode: difference; /* Visible on all colors */
+            }
+            body.hovering #cursor-ring {
+                width: 80px; height: 80px;
+                background: rgba(255, 255, 255, 0.1);
+                border-color: white;
+            }
+        }
+        @media (pointer: coarse) {
+            #cursor-dot, #cursor-ring { display: none; }
+        }
+
+        /* --- BACKGROUND --- */
+        #bg-wrapper { 
+            position: absolute; inset: 0; z-index: -3; 
+            background: linear-gradient(to bottom, #001219 0%, #005f73 50%, #0a9396 100%);
+        }
+        #wave-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; mix-blend-mode: screen; opacity: 0.6; }
+        #vignette {
+            position: absolute; inset: 0; z-index: -1;
+            background: radial-gradient(circle at 20% 50%, transparent 0%, rgba(0,0,0,0.7) 100%);
+        }
+
+        /* --- BOOT SCREEN --- */
+        #boot-screen {
+            position: fixed; inset: 0; z-index: 5000;
+            background: #000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.8s ease;
+        }
+        .boot-logo {
+            font-size: 50px; font-weight: 300; letter-spacing: -1px;
+            color: white; text-shadow: 0 0 40px rgba(0,255,255,0.4);
+            margin-bottom: 30px; text-align: center;
+        }
+        .boot-btn {
+            border: 1px solid rgba(255,255,255,0.2); padding: 14px 40px;
+            background: rgba(255,255,255,0.05); color: #ccc;
+            border-radius: 50px; font-size: 13px; letter-spacing: 2px;
+            transition: all 0.3s var(--ease-out); cursor: pointer;
+        }
+        .boot-btn:active, .boot-btn:hover { background: white; color: black; box-shadow: 0 0 30px rgba(255,255,255,0.6); transform: scale(1.05); }
+
+        /* --- TOAST (Bottom Right) --- */
+        #toast {
+            position: fixed; bottom: 120px; right: -350px; /* Above mobile controls */
+            background: rgba(10, 20, 30, 0.95);
+            backdrop-filter: blur(15px);
+            border-left: 4px solid #00d2ff;
+            padding: 15px 25px;
+            border-radius: 8px 0 0 8px;
+            z-index: 6000;
+            transition: right 0.6s var(--ease-out);
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            width: 280px;
+        }
+        #toast.show { right: 0; }
+        .toast-icon { font-size: 22px; }
+        .toast-text { font-size: 14px; font-weight: 700; color: white; }
+        .toast-sub { font-size: 12px; color: #88c0d0; margin-top: 2px; }
+
+        /* --- UI CONTAINER --- */
+        #xmb-interface {
+            width: 100%; height: 100%;
+            opacity: 0; display: none; 
+            transition: opacity 1s ease;
+        }
+        #xmb-interface.active { opacity: 1; display: block; }
+        #xmb-interface.blurred { opacity: 0.3; filter: blur(10px); pointer-events: none; }
+
+        /* CLOCK */
+        #clock-widget { position: absolute; top: 40px; right: 60px; text-align: right; }
+        #clock-time { font-size: 50px; font-weight: 200; }
+        #clock-date { font-size: 14px; color: rgba(255,255,255,0.6); }
+
+        /* CATEGORIES */
+        #category-container { position: absolute; top: 20%; left: 0; width: 100%; height: 100px; overflow: visible; }
+        #category-bar { position: absolute; left: var(--focus-col); display: flex; transition: transform 0.4s var(--ease-out); }
+        .cat-icon {
+            width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0.4; transform: scale(0.8); transition: all 0.4s var(--ease-out);
+        }
+        .cat-icon.active { opacity: 1; transform: scale(1.3); filter: drop-shadow(0 0 20px rgba(255,255,255,0.5)); }
+        .cat-icon svg { width: 40px; height: 40px; fill: white; }
+        .cat-label {
+            margin-top: 50px; position: absolute; font-size: 12px; letter-spacing: 2px;
+            text-transform: uppercase; opacity: 0; transition: 0.3s; color: #aaddff;
+        }
+        .cat-icon.active .cat-label { opacity: 1; }
+
+        /* COLUMNS */
+        .item-column {
+            position: absolute; left: var(--focus-col); top: 35%;
+            display: flex; flex-direction: column; width: 500px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s, transform 0.4s var(--ease-out);
+            transform-origin: left center;
+        }
+        .item-column.active-col { opacity: 1; pointer-events: auto; }
+
+        .item-card {
+            display: flex; align-items: center; height: var(--row-height);
+            padding-left: 10px; opacity: 0.5; transform: scale(0.95);
+            transform-origin: left center; transition: all 0.25s var(--ease-out);
+            margin-bottom: 5px;
+        }
+        .item-card.selected {
+            opacity: 1; transform: scale(1.1) translateX(20px);
+            text-shadow: 0 0 15px rgba(255,255,255,0.4);
+        }
+        .item-icon {
+            width: 44px; height: 44px; background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+            margin-right: 20px; flex-shrink: 0; display: flex; justify-content: center; align-items: center;
+            font-weight: 700; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .item-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+        .item-text h3 { font-size: 20px; font-weight: 500; margin-bottom: 2px; }
+        .item-text p { font-size: 12px; color: #aaddff; letter-spacing: 0.5px; opacity: 0.8; }
+
+        /* POPUP */
+        #pop-page {
+            position: fixed; inset: 0; z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: none; opacity: 0;
+            background: rgba(0,10,15,0.9);
+            transition: opacity 0.4s; padding: 20px;
+        }
+        #pop-page.open { pointer-events: auto; opacity: 1; }
+        .pop-box {
+            width: 100%; max-width: 600px; padding: 40px;
+            border-left: 3px solid white;
+            background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .pop-title { font-size: 36px; font-weight: 300; margin-bottom: 25px; }
+        .pop-content { font-size: 16px; line-height: 1.7; color: #ddd; }
+
+        /* MOBILE CONTROLS */
+        #mobile-controls {
+            display: none; position: fixed; bottom: 0; left: 0; width: 100%;
+            height: 180px; z-index: 8000; pointer-events: none;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        }
+        .d-pad {
+            position: absolute; bottom: 30px; left: 30px;
+            width: 140px; height: 140px; pointer-events: auto;
+        }
+        .d-btn {
+            position: absolute; width: 45px; height: 45px;
+            background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; display: flex; justify-content: center; align-items: center;
+            color: white; font-size: 18px; backdrop-filter: blur(5px);
+        }
+        .d-btn:active { background: white; color: black; }
+        .d-up { top: 0; left: 47.5px; }
+        .d-down { bottom: 0; left: 47.5px; }
+        .d-left { top: 47.5px; left: 0; }
+        .d-right { top: 47.5px; right: 0; }
+        
+        .action-btns {
+            position: absolute; bottom: 50px; right: 30px;
+            width: 120px; height: 60px; pointer-events: auto; display: flex; gap: 20px;
+        }
+        .a-btn, .b-btn {
+            width: 60px; height: 60px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; font-weight: bold;
+            border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(5px);
+        }
+        .a-btn { background: rgba(0, 255, 255, 0.1); color: cyan; }
+        .b-btn { background: rgba(255, 50, 50, 0.1); color: #ff5555; }
+        .a-btn:active { background: cyan; color: black; box-shadow: 0 0 15px cyan; }
+        .b-btn:active { background: #ff5555; color: white; box-shadow: 0 0 15px red; }
+
+        /* MOBILE QUERY */
+        @media (max-width: 768px) {
+            :root { --focus-col: 20px; --row-height: 60px; }
+            #mobile-controls { display: block; }
+            #category-container { top: 15%; }
+            .item-column { width: 85vw; top: 28%; }
+            .boot-logo { font-size: 36px; }
+            #toast { bottom: auto; top: 20px; right: -100%; } /* Toast moves to top on mobile */
+            #toast.show { right: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SMOOTH CURSOR -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
+
+    <!-- TOAST -->
+    <div id="toast">
+        <div class="toast-icon">👋</div>
+        <div class="toast-body">
+            <div class="toast-text">System Online</div>
+            <div class="toast-sub">Logged in as Dave</div>
+        </div>
+    </div>
+
+    <!-- BOOT -->
+    <div id="boot-screen">
+        <div class="boot-logo">Dave Jacob</div>
+        <div class="boot-btn">INITIALIZE SYSTEM</div>
+    </div>
+
+    <!-- MAIN UI -->
+    <div id="xmb-interface">
+        <div id="bg-wrapper"></div>
+        <div id="vignette"></div>
+        <canvas id="wave-canvas"></canvas>
+
+        <div id="clock-widget">
+            <div id="clock-time">00:00</div>
+            <div id="clock-date">Loading...</div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div id="category-container">
+            <div id="category-bar">
+                <div class="cat-icon active"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><div class="cat-label">User</div></div>
+                <div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg><div class="cat-label">Skills</div></div>
+                <div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg><div class="cat-label">Projects</div></div>
+                <div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg><div class="cat-label">Music</div></div>
+                <div class="cat-icon"><svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.5.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg><div class="cat-label">System</div></div>
+            </div>
+        </div>
+
+        <!-- ITEMS -->
+        <div class="item-column active-col" id="col-0">
+            <div class="item-card selected" data-t="Dave Jacob" data-c="<strong>Dave Jacob</strong><br><br>Full Stack Developer specializing in C# backend architecture and Python automation tools.<br><br>I build scalable systems and interactive web experiences.">
+                <div class="item-icon">DJ</div>
+                <div class="item-text"><h3>Dave Jacob</h3><p>Profile & Bio</p></div>
+            </div>
+        </div>
+
+        <div class="item-column" id="col-1">
+            <div class="item-card" data-t="Web Stack" data-c="HTML5, CSS3, JavaScript (ES6+), Web Audio API.">
+                <div class="item-icon" style="color:#e34c26">JS</div>
+                <div class="item-text"><h3>Web Dev</h3><p>Frontend</p></div>
+            </div>
+            <div class="item-card" data-t="Python" data-c="Data Processing, Automation Scripts, System Utilities.">
+                <div class="item-icon" style="color:#306998">Py</div>
+                <div class="item-text"><h3>Python</h3><p>Backend</p></div>
+            </div>
+            <div class="item-card" data-t="C#" data-c="WPF, Unity, .NET Framework, Memory Management.">
+                <div class="item-icon" style="color:#9b4993">C#</div>
+                <div class="item-text"><h3>C# .NET</h3><p>Software</p></div>
+            </div>
+        </div>
+
+        <div class="item-column" id="col-2">
+            <div class="item-card" data-link="https://github.com" data-t="Cubic" data-c="<strong>Cubic Executor</strong><br>A C# based script executor.<br><br>Features custom DLL injection and Monaco editor.<br><br>[PRESS SPACE / A TO VISIT REPO]">
+                <div class="item-icon">#</div>
+                <div class="item-text"><h3>Cubic</h3><p>Script Executor</p></div>
+            </div>
+            <div class="item-card" data-link="https://github.com" data-t="Lumina" data-c="<strong>Lumina Cleaner</strong><br>Python system optimizer.<br><br>Cleans temp files, prefetch, and registry errors.<br><br>[PRESS SPACE / A TO VISIT REPO]">
+                <div class="item-icon">Py</div>
+                <div class="item-text"><h3>Lumina</h3><p>System Cleaner</p></div>
+            </div>
+        </div>
+
+        <div class="item-column" id="col-3">
+            <div class="item-card" id="music-card" data-t="Last.fm" data-c="Fetching data...">
+                <div class="item-icon"><img id="music-art" src="" style="display:none;">♫</div>
+                <div class="item-text">
+                    <h3 id="music-track">Loading...</h3>
+                    <p id="music-artist">Connecting...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="item-column" id="col-4">
+            <div class="item-card" id="audio-settings-card" data-t="Audio Settings" data-c="<strong>Volume Control</strong><br>Use UP/DOWN arrows (or D-Pad) to adjust volume.<br><br>Current Level: <span id='vol-disp'>50%</span>">
+                <div class="item-icon">♫</div>
+                <div class="item-text"><h3>Audio</h3><p>Adjust Volume</p></div>
+            </div>
+            <div class="item-card" id="shutdown-card" data-t="Shutdown" data-c="Powering off system...">
+                <div class="item-icon">O</div>
+                <div class="item-text"><h3>Shutdown</h3><p>Power Off</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP -->
+    <div id="pop-page">
+        <div class="pop-box">
+            <h1 class="pop-title" id="pop-title">Title</h1>
+            <div class="pop-content" id="pop-content">Content</div>
+            <div style="margin-top:20px; font-size:12px; color:#666;">[BACKSPACE / B] RETURN</div>
+        </div>
+    </div>
+
+    <!-- MOBILE INPUTS -->
+    <div id="mobile-controls">
+        <div class="d-pad">
+            <div class="d-btn d-up" onclick="triggerKey('ArrowUp')">▲</div>
+            <div class="d-btn d-down" onclick="triggerKey('ArrowDown')">▼</div>
+            <div class="d-btn d-left" onclick="triggerKey('ArrowLeft')">◀</div>
+            <div class="d-btn d-right" onclick="triggerKey('ArrowRight')">▶</div>
+        </div>
+        <div class="action-btns">
+            <div class="b-btn" onclick="triggerKey('Backspace')">B</div>
+            <div class="a-btn" onclick="triggerKey('Enter')">A</div>
+        </div>
+    </div>
+
+    <script>
+        /* --- STATE --- */
+        let systemVol = 0.5;
+        const bgMusic = new Audio('menu.mp3');
+        bgMusic.loop = true; 
+        bgMusic.volume = systemVol;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        let catIndex = 0;
+        let itemIndex = 0;
+        let state = "MENU"; // MENU, POPUP, SHUTDOWN
+        
+        const cats = document.querySelectorAll('.cat-icon');
+        const bar = document.getElementById('category-bar');
+        const cols = document.querySelectorAll('.item-column');
+        const pop = document.getElementById('pop-page');
+
+        /* --- TOAST --- */
+        function showToast(msg, sub) {
+            const t = document.getElementById('toast');
+            document.querySelector('.toast-text').innerText = msg;
+            document.querySelector('.toast-sub').innerText = sub;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 4000);
+        }
+
+        /* --- BOOT SEQUENCE --- */
+        document.querySelector('.boot-btn').addEventListener('click', () => {
+            bgMusic.play().catch(() => console.log('Audio Autoplay Blocked'));
+            audioCtx.resume();
+            
+            document.getElementById('boot-screen').style.opacity = 0;
+            setTimeout(() => {
+                document.getElementById('boot-screen').style.display = 'none';
+                const ui = document.getElementById('xmb-interface');
+                ui.style.display = 'block';
+                void ui.offsetWidth;
+                ui.classList.add('active');
+                
+                showToast('System Online', 'Welcome Dave');
+                updateLayout();
+                fetchLastFm();
+            }, 800);
+        });
+
+        /* --- NAVIGATION SYSTEM --- */
+        function updateLayout() {
+            const iconW = 120;
+            bar.style.transform = `translateX(${-(catIndex * iconW)}px)`;
+
+            cats.forEach((c, i) => c.classList.toggle('active', i === catIndex));
+
+            cols.forEach((col, i) => {
+                if(i === catIndex) {
+                    col.classList.add('active-col');
+                    const items = col.querySelectorAll('.item-card');
+                    if(itemIndex >= items.length) itemIndex = items.length - 1;
+                    if(itemIndex < 0) itemIndex = 0;
+                    
+                    items.forEach((item, k) => item.classList.toggle('selected', k === itemIndex));
+                    col.style.transform = `translateY(${-(itemIndex * 75)}px)`;
+                } else {
+                    col.classList.remove('active-col');
+                    col.style.transform = `translateY(50px)`;
+                }
+            });
+        }
+
+        /* --- INPUT HANDLING --- */
+        function triggerKey(key) {
+            const e = new KeyboardEvent('keydown', { code: key, key: key });
+            document.dispatchEvent(e);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if(state === "SHUTDOWN") return;
+
+            // --- POPUP CONTROLS ---
+            if(state === "POPUP") {
+                const activeCol = cols[catIndex];
+                const activeItem = activeCol.querySelectorAll('.item-card')[itemIndex];
+
+                // Close Popup
+                if(e.key === 'Backspace' || e.key === 'Escape') {
+                    playTone('back');
+                    closePopup();
+                    return;
+                }
+
+                // Volume Control (Only if Audio Card)
+                if(activeItem.id === 'audio-settings-card') {
+                    if(e.key === 'ArrowUp' || e.key === 'ArrowRight') adjustVolume(0.1);
+                    if(e.key === 'ArrowDown' || e.key === 'ArrowLeft') adjustVolume(-0.1);
+                }
+
+                // Project Link (Only if Project Card + Space/Enter)
+                if((e.code === 'Space' || e.key === 'Enter') && activeItem.dataset.link) {
+                    window.open(activeItem.dataset.link, '_blank');
+                    showToast('Opening Link', 'GitHub');
+                }
+                return;
+            }
+
+            // --- MENU CONTROLS ---
+            if(!document.getElementById('xmb-interface').classList.contains('active')) return;
+
+            const activeCol = cols[catIndex];
+            const max = activeCol.querySelectorAll('.item-card').length;
+            const currentItem = activeCol.querySelectorAll('.item-card')[itemIndex];
+            let moved = false;
+
+            if(e.key === 'ArrowRight') {
+                if (catIndex < cats.length - 1) { catIndex++; itemIndex = 0; moved = true; }
+            } else if(e.key === 'ArrowLeft') {
+                if (catIndex > 0) { catIndex--; itemIndex = 0; moved = true; }
+            } else if(e.key === 'ArrowDown') {
+                if (itemIndex < max - 1) { itemIndex++; moved = true; }
+            } else if(e.key === 'ArrowUp') {
+                if (itemIndex > 0) { itemIndex--; moved = true; }
+            } else if(e.key === 'Enter') {
+                if(currentItem.id === 'shutdown-card') {
+                    shutdownSystem();
+                } else {
+                    playTone('select');
+                    openPopup(currentItem);
+                }
+            }
+
+            if(moved) {
+                playTone('move');
+                updateLayout();
+            }
+        });
+
+        /* --- ACTIONS --- */
+        function adjustVolume(delta) {
+            systemVol = Math.min(Math.max(systemVol + delta, 0), 1);
+            bgMusic.volume = systemVol;
+            const pct = Math.round(systemVol*100) + '%';
+            document.getElementById('vol-disp').innerText = pct;
+            showToast('Volume', pct);
+        }
+
+        function openPopup(item) {
+            state = "POPUP";
+            document.getElementById('pop-title').innerHTML = item.dataset.t;
+            let content = item.dataset.c;
+            if(item.id === 'audio-settings-card') content = content.replace("50%", Math.round(systemVol*100) + "%");
+            document.getElementById('pop-content').innerHTML = content;
+            document.getElementById('xmb-interface').classList.add('blurred');
+            pop.classList.add('open');
+        }
+
+        function closePopup() {
+            state = "MENU";
+            document.getElementById('xmb-interface').classList.remove('blurred');
+            pop.classList.remove('open');
+        }
+
+        function shutdownSystem() {
+            state = "SHUTDOWN";
+            showToast('System', 'Shutting Down...');
+            document.body.style.opacity = '0';
+            const fade = setInterval(() => {
+                if(bgMusic.volume > 0.05) bgMusic.volume -= 0.05;
+                else { bgMusic.volume = 0; bgMusic.pause(); clearInterval(fade); }
+            }, 100);
+        }
+
+        function playTone(type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if(type === 'back') {
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            } else {
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            }
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        /* --- LAST.FM --- */
+        async function fetchLastFm() {
+            const apiKey = 'b9c80bce436330ba5a8a98b407e6341c';
+            const user = 'dxveyyy';
+            try {
+                const res = await fetch(`https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${user}&api_key=${apiKey}&format=json&limit=1`);
+                const data = await res.json();
+                const track = data.recenttracks.track[0];
+                
+                if(track) {
+                    const isNow = track['@attr'] && track['@attr'].nowplaying === 'true';
+                    const prefix = isNow ? "🎧 Now Playing" : "⏮ Last Played";
+                    const img = track.image[1]['#text'];
+
+                    document.getElementById('music-track').innerText = track.name;
+                    document.getElementById('music-artist').innerText = `${prefix}: ${track.artist['#text']}`;
+                    if(img) {
+                        document.getElementById('music-art').src = img;
+                        document.getElementById('music-art').style.display = 'block';
+                    }
+                    
+                    const card = document.getElementById('music-card');
+                    card.dataset.t = isNow ? "Now Playing" : "Last Played";
+                    card.dataset.c = `<strong>Track:</strong> ${track.name}<br><strong>Artist:</strong> ${track.artist['#text']}<br><strong>Album:</strong> ${track.album['#text']}`;
+                }
+            } catch(e) {}
+        }
+        setInterval(fetchLastFm, 60000); // 60s Refresh
+
+        /* --- VISUALS --- */
+        const canvas = document.getElementById('wave-canvas');
+        const ctx = canvas.getContext('2d');
+        let t = 0;
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; updateLayout(); }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function draw() {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            const cy = canvas.height / 2;
+            for(let i=0; i<3; i++) {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(255,255,255,${0.25 - i*0.07})`;
+                ctx.lineWidth = 2;
+                for(let x=0; x<canvas.width; x+=10) {
+                    let y = Math.sin(x*0.003 + t + i) * 100 + cy;
+                    if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
+            }
+            t += 0.02;
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        /* --- CURSOR --- */
+        let mx=0, my=0, dx=0, dy=0;
+        const dot = document.getElementById('cursor-dot');
+        const ring = document.getElementById('cursor-ring');
+        
+        document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+        document.addEventListener('mouseover', e => {
+            if(e.target.closest('.item-card') || e.target.closest('.cat-icon') || e.target.closest('.boot-btn')) 
+                document.body.classList.add('hovering');
+            else document.body.classList.remove('hovering');
+        });
+
+        function cursorLoop() {
+            // Smooth lerp
+            dx += (mx - dx) * 0.2; dy += (my - dy) * 0.2;
+            dot.style.transform = `translate3d(${mx}px, ${my}px, 0) translate(-50%, -50%)`;
+            ring.style.transform = `translate3d(${dx}px, ${dy}px, 0) translate(-50%, -50%)`;
+            requestAnimationFrame(cursorLoop);
+        }
+        cursorLoop();
+
+        /* --- CLOCK --- */
+        setInterval(() => {
+            const d = new Date();
+            document.getElementById('clock-time').innerText = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+            document.getElementById('clock-date').innerText = d.toLocaleDateString();
+        }, 1000);
+    </script>
+</body>
+</html>
