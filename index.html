@@ -1000,18 +1000,115 @@
             background: linear-gradient(145deg, rgba(255, 50, 50, 0.2), rgba(255, 50, 50, 0.1));
             box-shadow: 0 0 25px rgba(255,50,50,0.3);
         }
+        
+        /* Mobile Extra Buttons (Trophy & Konami) */
+        .mobile-extra-btns {
+            position: absolute;
+            bottom: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+        .mobile-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: all 0.15s var(--ease-out);
+        }
+        .mobile-btn:active {
+            transform: scale(0.92);
+            background: rgba(255,255,255,0.2);
+        }
+        .btn-trophy {
+            background: linear-gradient(145deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+        .btn-konami {
+            background: linear-gradient(145deg, rgba(138, 43, 226, 0.15), rgba(138, 43, 226, 0.05));
+            border-color: rgba(138, 43, 226, 0.3);
+        }
 
         @media (max-width: 768px) {
-            :root { --focus-col: 20px; --row-height: 60px; }
+            :root { --focus-col: 15px; --row-height: 55px; }
             #mobile-controls { display: block; }
-            #category-container { top: 15%; }
-            .item-column { width: 85vw; top: 28%; }
-            .boot-logo { font-size: 36px; }
-            #toast { bottom: auto; top: 20px; right: -100%; }
+            #category-container { top: 12%; }
+            #category-bar { left: 10px; }
+            .cat-icon { width: 70px; }
+            .cat-icon svg { width: 28px; height: 28px; }
+            .cat-icon.active { transform: scale(1.1); }
+            .cat-label { font-size: 8px; margin-top: 35px; letter-spacing: 1px; }
+            .item-column { width: 90vw; top: 26%; left: 10px; }
+            .item-card { height: var(--row-height); padding-left: 5px; margin-bottom: 3px; }
+            .item-card.selected { transform: scale(1.02) translateX(8px); }
+            .item-icon { width: 38px; height: 38px; margin-right: 12px; }
+            .item-text h3 { font-size: 16px; }
+            .item-text p { font-size: 11px; }
+            .boot-logo { font-size: 32px; }
+            .boot-btn { padding: 12px 30px; font-size: 12px; }
+            #clock-widget { top: 45px; right: 15px; }
+            #clock-time { font-size: 32px; }
+            #clock-date { font-size: 11px; }
+            #status-bar { top: 10px; right: 15px; padding: 4px 10px; gap: 8px; }
+            #status-bar .status-item { font-size: 10px; }
+            .battery-icon { width: 22px; height: 11px; }
+            .wifi-bar { width: 2px; }
+            #toast { bottom: auto; top: 15px; right: -100%; width: 260px; padding: 12px 18px; }
             #toast.show { right: 0; }
+            #trophy-toast { padding: 12px 20px; top: 70px; width: 90%; max-width: 320px; }
+            .trophy-icon { font-size: 26px; }
+            .trophy-name { font-size: 14px; }
+            .pop-box { padding: 25px; max-height: 80vh; overflow-y: auto; }
+            .pop-title { font-size: 24px; margin-bottom: 15px; }
+            .pop-content { font-size: 14px; }
             /* Disable Vita Mode logic on mobile */
             body.vita-mode #xmb-interface { width: 100% !important; height: 100% !important; transform: none !important; border: none !important; box-shadow: none !important; }
             body.vita-mode #vita-chassis { display: none !important; }
+        }
+        
+        /* Landscape mobile */
+        @media (max-width: 900px) and (orientation: landscape) {
+            #mobile-controls { height: 140px; }
+            .d-pad { width: 100px; height: 100px; bottom: 10px; left: 10px; }
+            .d-btn { width: 32px; height: 32px; }
+            .d-btn svg { width: 18px; height: 18px; }
+            .d-up { top: 0; left: 34px; }
+            .d-down { bottom: 0; left: 34px; }
+            .d-left { top: 34px; left: 0; }
+            .d-right { top: 34px; right: 0; }
+            .action-btns { bottom: 15px; right: 10px; gap: 12px; }
+            .c-btn { width: 45px; height: 45px; }
+            .c-btn svg { width: 22px; height: 22px; }
+            .btn-back { margin-bottom: 8px; }
+            .mobile-extra-btns { bottom: 100px; gap: 10px; }
+            .mobile-btn { width: 38px; height: 38px; font-size: 16px; }
+            #category-container { top: 10%; }
+            .item-column { top: 32%; width: 65vw; }
+            #clock-widget { top: 5px; right: 8px; }
+            #clock-time { font-size: 22px; }
+            #clock-date { font-size: 9px; }
+            #status-bar { top: 3px; padding: 3px 8px; }
+            .pop-box { max-height: 65vh; padding: 20px; }
+            .pop-title { font-size: 20px; }
+        }
+        
+        /* Small phones */
+        @media (max-width: 390px) {
+            :root { --focus-col: 10px; --row-height: 50px; }
+            .cat-icon { width: 60px; }
+            .item-text h3 { font-size: 14px; }
+            .item-icon { width: 34px; height: 34px; margin-right: 10px; }
+            #clock-time { font-size: 28px; }
         }
     </style>
 </head>
@@ -1321,6 +1418,10 @@
             <div class="d-btn d-down" onclick="triggerKey('ArrowDown')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
             <div class="d-btn d-left" onclick="triggerKey('ArrowLeft')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></div>
             <div class="d-btn d-right" onclick="triggerKey('ArrowRight')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+        </div>
+        <div class="mobile-extra-btns">
+            <div class="mobile-btn btn-trophy" onclick="showTrophySection()">🏆</div>
+            <div class="mobile-btn btn-konami" onclick="triggerKonamiCode()">🎮</div>
         </div>
         <div class="action-btns">
             <div class="c-btn btn-back" onclick="triggerKey('Backspace')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></div>
@@ -1755,6 +1856,34 @@
         function triggerKey(key) {
             const e = new KeyboardEvent('keydown', { code: key, key: key });
             document.dispatchEvent(e);
+        }
+        
+        // Mobile Konami Code trigger
+        function triggerKonamiCode() {
+            if (isVitaMode) {
+                // Exit vita mode
+                isVitaMode = false;
+                showToast('DESKTOP MODE', 'Returning...');
+                document.body.classList.remove('vita-mode');
+                const xmbInterface = document.getElementById('xmb-interface');
+                const vitaChassis = document.getElementById('vita-chassis');
+                xmbInterface.classList.remove('tilt-ready');
+                vitaChassis.classList.remove('tilt-ready');
+                xmbInterface.style.transform = '';
+                vitaChassis.style.transform = '';
+                playTone('back');
+            } else {
+                // Enter vita mode
+                isVitaMode = true;
+                showToast('HANDHELD MODE', 'PS Vita Active');
+                document.body.classList.add('vita-mode');
+                playTone('select');
+                unlockTrophy('Cheat Code Entered');
+                setTimeout(() => {
+                    document.getElementById('xmb-interface').classList.add('tilt-ready');
+                    document.getElementById('vita-chassis').classList.add('tilt-ready');
+                }, 1300);
+            }
         }
 
         document.addEventListener('keydown', (e) => {
