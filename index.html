@@ -16,13 +16,14 @@
         /* --- CORE SETTINGS --- */
         :root {
             --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+            --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy 3D effect */
             --focus-col: 20vw;
             --row-height: 75px;
             --font-main: 'Plus Jakarta Sans', sans-serif;
+            --bg-gradient: linear-gradient(to bottom, #001219 0%, #005f73 50%, #0a9396 100%);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         
-        /* Allow text selection ONLY in inputs */
         input, textarea { user-select: text !important; cursor: text !important; }
         
         body {
@@ -32,8 +33,265 @@
             height: 100vh;
             width: 100vw;
             overflow: hidden;
-            transition: opacity 1.5s ease;
+            transition: background 1.5s ease;
+            perspective: 1500px; /* Deep perspective for 3D tilt */
         }
+
+        /* --- VITA MODE (Camera Pan Effect) --- */
+        body.vita-mode {
+            background: radial-gradient(circle at center, #2a2a2a 0%, #000000 100%);
+        }
+        
+        /* Smooth camera pan */
+        body.vita-mode #xmb-interface.active {
+            animation: cameraPanIn 1.2s ease-in-out forwards;
+        }
+        
+        /* After animation completes, allow JS to control transform */
+        body.vita-mode #xmb-interface.active.tilt-ready {
+            animation: none;
+            width: 760px;
+            height: 430px;
+            top: 50%;
+            left: 50%;
+            border-radius: 4px;
+            transform: translate(-50%, -50%) scale(0.95) rotateX(15deg) rotateY(-8deg) rotateZ(1deg);
+        }
+        
+        @keyframes cameraPanIn {
+            0% {
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                transform: scale(1);
+                border-radius: 0;
+            }
+            100% {
+                width: 760px;
+                height: 430px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotateX(15deg) rotateY(-8deg) rotateZ(1deg) scale(0.95);
+                border-radius: 4px;
+            }
+        }
+        
+        /* Exit animation */
+        #xmb-interface.vita-exit {
+            animation: cameraPanOut 1s ease-in-out forwards !important;
+        }
+        
+        @keyframes cameraPanOut {
+            0% {
+                width: 760px;
+                height: 430px;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotateX(15deg) rotateY(-8deg) rotateZ(1deg) scale(0.95);
+                border-radius: 4px;
+            }
+            100% {
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                transform: scale(1);
+                border-radius: 0;
+            }
+        }
+        
+        #vita-chassis.vita-exit {
+            animation: chassisFadeOut 0.5s ease-in-out forwards !important;
+        }
+        
+        @keyframes chassisFadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* 3D Transform Logic for Chassis */
+        body.vita-mode #vita-chassis {
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotateX(15deg) rotateY(-8deg) rotateZ(1deg) scale(0.95);
+            animation: chassisFadeIn 1.2s ease-in-out forwards;
+        }
+        
+        @keyframes chassisFadeIn {
+            0%, 40% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        
+        /* After animation completes, allow JS to control transform */
+        body.vita-mode #vita-chassis.tilt-ready {
+            animation: none;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(0.95) rotateX(15deg) rotateY(-8deg) rotateZ(1deg);
+        }
+
+        /* --- CHASSIS (SVG) --- */
+        #vita-chassis {
+            position: absolute;
+            width: 1200px; height: 600px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1.5); /* Start zoomed out/larger */
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20; /* Above screen to frame it */
+            transform-style: preserve-3d;
+            transition: opacity 0.5s ease, transform 3.0s var(--ease-out);
+        }
+        
+        body.vita-mode #vita-chassis {
+            opacity: 1;
+            /* Drop shadow filter creates shadow around the SHAPE, not the box */
+            filter: drop-shadow(0 50px 80px rgba(0,0,0,0.8));
+        }
+
+        /* --- INTERFACE (SCREEN) --- */
+        #xmb-interface {
+            width: 100%; height: 100%;
+            opacity: 0; display: none; 
+            transition: opacity 1s ease, width 1s ease, height 1s ease, transform 3.0s var(--ease-out);
+            transform-origin: center center;
+            background: transparent;
+        }
+        #xmb-interface.active { opacity: 1; display: block; }
+        #xmb-interface.blurred { opacity: 0.3; filter: blur(10px); pointer-events: none; }
+        
+        /* SHUTDOWN STATE (Screen Off) */
+        #xmb-interface.power-off {
+            background: #000 !important;
+        }
+        #xmb-interface.power-off > * {
+            display: none !important;
+        }
+
+        /* PS3-Style Shutdown Overlay */
+        #shutdown-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        #shutdown-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        .shutdown-text {
+            font-size: 32px;
+            font-weight: 300;
+            color: rgba(255,255,255,0.9);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            animation: shutdownPulse 2s ease-in-out infinite;
+        }
+        @keyframes shutdownPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        .shutdown-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .shutdown-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(0,210,255,0.8), transparent);
+            animation: waveSlide 2s ease-in-out infinite;
+        }
+        @keyframes waveSlide {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        /* VITA MODE SCREEN SPECIFICS */
+        body.vita-mode #xmb-interface.active {
+            position: absolute;
+            z-index: 25;
+            overflow: clip;
+            box-shadow: none;
+            display: block !important;
+            opacity: 1 !important;
+        }
+        
+        /* Ensure background shows in Vita mode */
+        body.vita-mode #bg-wrapper {
+            z-index: 0 !important;
+            background: var(--bg-gradient) !important;
+        }
+        body.vita-mode #wave-canvas {
+            z-index: 1 !important;
+        }
+        body.vita-mode #vignette {
+            z-index: 2 !important;
+        }
+        body.vita-mode #clock-widget,
+        body.vita-mode #category-container,
+        body.vita-mode .item-column {
+            z-index: 3 !important;
+        }
+
+        /* Internal Layout Adjustments for Vita Mode */
+        body.vita-mode #clock-widget {
+            transform: scale(0.7);
+            transform-origin: top right;
+            top: 15px;
+            right: 20px;
+            transition: all 0.8s var(--ease-out);
+        }
+        body.vita-mode #category-container {
+            top: 60px;
+            height: 80px;
+            overflow: visible;
+            transition: all 0.8s var(--ease-out) 0.1s;
+        }
+        body.vita-mode #category-bar {
+            left: 15px;
+        }
+        body.vita-mode .item-column {
+            top: 150px;
+            left: 15px;
+            transition: all 0.8s var(--ease-out) 0.15s;
+        }
+        body.vita-mode .cat-icon {
+            width: 90px;
+            transform: scale(0.7);
+            transition: transform 0.3s var(--ease-out);
+        }
+        body.vita-mode .cat-icon.active {
+            transform: scale(1);
+        }
+        body.vita-mode .cat-label {
+            font-size: 9px;
+            margin-top: 40px;
+        }
+
+        /* Screen Reflection overlay */
+        body.vita-mode #xmb-interface.active::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 40%, transparent 100%);
+            pointer-events: none; z-index: 15;
+        }
+
+        /* Hide mobile controls in Vita Mode */
+        body.vita-mode #mobile-controls { display: none !important; }
 
         /* --- SMOOTH CURSOR --- */
         @media (pointer: fine) {
@@ -59,6 +317,9 @@
                 background: rgba(255, 255, 255, 0.1);
                 border-color: white;
             }
+            /* Green cursor in Vita Mode */
+            body.vita-mode #cursor-dot { background: #00ffaa; box-shadow: 0 0 10px #00ffaa; }
+            body.vita-mode #cursor-ring { border-color: #00ffaa; }
         }
         @media (pointer: coarse) {
             #cursor-dot, #cursor-ring { display: none; }
@@ -67,7 +328,8 @@
         /* --- BACKGROUND --- */
         #bg-wrapper { 
             position: absolute; inset: 0; z-index: -3; 
-            background: linear-gradient(to bottom, #001219 0%, #005f73 50%, #0a9396 100%);
+            background: var(--bg-gradient);
+            transition: background 1.5s ease;
         }
         #wave-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; mix-blend-mode: screen; opacity: 0.6; }
         #vignette {
@@ -96,45 +358,479 @@
         }
         .boot-btn:active, .boot-btn:hover { background: white; color: black; box-shadow: 0 0 30px rgba(255,255,255,0.6); transform: scale(1.05); }
 
-        /* --- TOAST --- */
+        /* --- PS3/VITA LOADING SCREEN --- */
+        #loading-screen {
+            position: fixed; inset: 0; z-index: 4500;
+            background: #000;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            overflow: hidden;
+        }
+        #loading-screen.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        /* PS3 Ribbon/String Animation */
+        .ribbon-container {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+        .ribbon {
+            position: absolute;
+            width: 200%;
+            height: 3px;
+            left: -50%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(100, 150, 255, 0.1) 20%,
+                rgba(100, 180, 255, 0.6) 40%,
+                rgba(150, 200, 255, 1) 50%,
+                rgba(100, 180, 255, 0.6) 60%,
+                rgba(100, 150, 255, 0.1) 80%,
+                transparent 100%
+            );
+            filter: blur(1px);
+            opacity: 0;
+            animation: ribbonFlow 4s ease-in-out forwards;
+        }
+        .ribbon:nth-child(1) { top: 20%; animation-delay: 0s; }
+        .ribbon:nth-child(2) { top: 35%; animation-delay: 0.2s; }
+        .ribbon:nth-child(3) { top: 50%; animation-delay: 0.4s; }
+        .ribbon:nth-child(4) { top: 65%; animation-delay: 0.6s; }
+        .ribbon:nth-child(5) { top: 80%; animation-delay: 0.8s; }
+        
+        @keyframes ribbonFlow {
+            0% { 
+                transform: translateX(-30%) scaleY(1); 
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            50% { 
+                transform: translateX(30%) scaleY(2); 
+                opacity: 1;
+            }
+            90% { opacity: 1; }
+            100% { 
+                transform: translateX(60%) scaleY(0.5); 
+                opacity: 0;
+            }
+        }
+        
+        /* Converging ribbons effect */
+        .ribbon-converge {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(150, 200, 255, 0.8), transparent);
+            opacity: 0;
+            filter: blur(0.5px);
+        }
+        .ribbon-converge:nth-child(6) { top: 10%; animation: convergeDown 2s ease-out 1.5s forwards; }
+        .ribbon-converge:nth-child(7) { top: 90%; animation: convergeUp 2s ease-out 1.5s forwards; }
+        .ribbon-converge:nth-child(8) { top: 25%; animation: convergeDown 2s ease-out 1.7s forwards; }
+        .ribbon-converge:nth-child(9) { top: 75%; animation: convergeUp 2s ease-out 1.7s forwards; }
+        
+        @keyframes convergeDown {
+            0% { opacity: 0; transform: translateY(0); }
+            30% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(40vh); }
+        }
+        @keyframes convergeUp {
+            0% { opacity: 0; transform: translateY(0); }
+            30% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-40vh); }
+        }
+        
+        /* Title reveal */
+        .loading-title {
+            font-size: 48px;
+            font-weight: 200;
+            color: white;
+            letter-spacing: 2px;
+            opacity: 0;
+            transform: scale(0.9);
+            animation: titleReveal 1.5s ease-out 2s forwards;
+            text-shadow: 0 0 30px rgba(100, 180, 255, 0.5);
+            z-index: 10;
+        }
+        .loading-subtitle {
+            font-size: 14px;
+            color: rgba(150, 180, 220, 0.8);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0;
+            margin-top: 15px;
+            animation: subtitleReveal 1s ease-out 2.5s forwards;
+            z-index: 10;
+        }
+        @keyframes titleReveal {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes subtitleReveal {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Loading indicator */
+        .loading-indicator {
+            position: absolute;
+            bottom: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 3s forwards;
+            z-index: 10;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        .loading-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: rgba(150, 200, 255, 0.8);
+            border-radius: 50%;
+            animation: dotPulse 1.4s ease-in-out infinite;
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotPulse {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        .loading-status {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* --- TOAST (Enhanced PS Vita Style) --- */
         #toast {
-            position: fixed; bottom: 120px; right: -350px;
-            background: rgba(10, 20, 30, 0.95);
-            backdrop-filter: blur(15px);
-            border-left: 4px solid #00d2ff;
-            padding: 15px 25px;
-            border-radius: 8px 0 0 8px;
+            position: fixed; bottom: 120px; right: -380px;
+            background: linear-gradient(135deg, rgba(15, 25, 35, 0.98), rgba(5, 15, 25, 0.98));
+            backdrop-filter: blur(20px) saturate(180%);
+            border-left: 5px solid #00d2ff;
+            border-radius: 12px 0 0 12px;
+            padding: 18px 28px;
             z-index: 6000;
-            transition: right 0.6s var(--ease-out);
-            display: flex; align-items: center; gap: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            width: 280px;
+            transition: right 0.7s var(--spring-bounce), transform 0.3s ease;
+            display: flex; align-items: center; gap: 18px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+            width: 320px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         #toast.show { right: 0; }
-        .toast-icon { font-size: 22px; }
-        .toast-text { font-size: 14px; font-weight: 700; color: white; }
-        .toast-sub { font-size: 12px; color: #88c0d0; margin-top: 2px; }
-
-        /* --- UI CONTAINER --- */
-        #xmb-interface {
-            width: 100%; height: 100%;
-            opacity: 0; display: none; 
-            transition: opacity 1s ease;
+        #toast:hover { transform: translateX(-5px); }
+        .toast-icon { 
+            font-size: 28px; 
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+            animation: toastIconPulse 2s ease-in-out infinite;
         }
-        #xmb-interface.active { opacity: 1; display: block; }
-        #xmb-interface.blurred { opacity: 0.3; filter: blur(10px); pointer-events: none; }
+        @keyframes toastIconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .toast-text { 
+            font-size: 15px; 
+            font-weight: 700; 
+            color: white; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            letter-spacing: 0.3px;
+        }
+        .toast-sub { 
+            font-size: 12px; 
+            color: #88c0d0; 
+            margin-top: 3px;
+            opacity: 0.9;
+        }
+        
+        /* Vita Mode Toast Adjustments */
+        body.vita-mode #toast {
+            border-left-color: #00ffaa;
+            background: linear-gradient(135deg, rgba(0, 20, 15, 0.98), rgba(0, 10, 8, 0.98));
+        }
 
         /* CLOCK */
-        #clock-widget { position: absolute; top: 40px; right: 60px; text-align: right; }
+        #clock-widget { 
+            position: absolute; top: 55px; right: 60px; text-align: right; 
+            transition: all 0.5s var(--ease-out);
+        }
         #clock-time { font-size: 50px; font-weight: 200; }
         #clock-date { font-size: 14px; color: rgba(255,255,255,0.6); }
 
+        /* STATUS BAR (Battery & WiFi - Frutiger Aero Style) */
+        #status-bar {
+            position: absolute;
+            top: 15px;
+            right: 60px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 50;
+            background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.15) 100%);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+            backdrop-filter: blur(10px);
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            font-weight: 500;
+        }
+        .status-divider {
+            width: 1px;
+            height: 16px;
+            background: linear-gradient(180deg, transparent, rgba(255,255,255,0.4), transparent);
+        }
+        .battery-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .battery-icon {
+            width: 28px;
+            height: 14px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+            border: 1.5px solid rgba(255,255,255,0.6);
+            border-radius: 3px;
+            position: relative;
+            padding: 2px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+            margin-right: 2px;
+        }
+        .battery-icon::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 7px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.3));
+            border-radius: 0 2px 2px 0;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-left: none;
+        }
+        .battery-level {
+            height: 100%;
+            background: linear-gradient(180deg, #90EE90 0%, #32CD32 50%, #228B22 100%);
+            border-radius: 1px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 4px rgba(50,205,50,0.5);
+        }
+        .battery-level.low { 
+            background: linear-gradient(180deg, #FF6B6B 0%, #EE4444 50%, #CC0000 100%);
+            box-shadow: 0 0 4px rgba(255,0,0,0.5);
+        }
+        .battery-level.charging { 
+            background: linear-gradient(180deg, #87CEEB 0%, #00BFFF 50%, #1E90FF 100%);
+            box-shadow: 0 0 4px rgba(0,191,255,0.5);
+            animation: chargePulse 1.5s ease-in-out infinite;
+        }
+        @keyframes chargePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .wifi-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 14px;
+        }
+        .wifi-bar {
+            width: 3px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.5) 100%);
+            border-radius: 1px;
+            box-shadow: 0 0 3px rgba(255,255,255,0.3);
+        }
+        .wifi-bar:nth-child(1) { height: 4px; }
+        .wifi-bar:nth-child(2) { height: 7px; }
+        .wifi-bar:nth-child(3) { height: 10px; }
+        .wifi-bar:nth-child(4) { height: 14px; }
+        .wifi-bar.inactive {
+            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+            box-shadow: none;
+        }
+
+        /* TROPHY SECTION OVERLAY */
+        #trophy-section {
+            position: fixed;
+            inset: 0;
+            z-index: 8000;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        #trophy-section.active {
+            display: flex;
+            opacity: 1;
+        }
+        .trophy-section-title {
+            font-size: 28px;
+            font-weight: 300;
+            color: #ffd700;
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+            text-shadow: 0 0 20px rgba(255,215,0,0.4);
+        }
+        .trophy-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .trophy-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, rgba(40,35,25,0.9), rgba(30,25,15,0.9));
+            border: 1px solid rgba(255,215,0,0.2);
+            border-radius: 8px;
+        }
+        .trophy-item.locked {
+            opacity: 0.4;
+            filter: grayscale(1);
+        }
+        .trophy-item-icon {
+            font-size: 32px;
+        }
+        .trophy-item-info {
+            flex: 1;
+        }
+        .trophy-item-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .trophy-item-desc {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+        }
+        .trophy-item-status {
+            font-size: 11px;
+            color: #ffd700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .trophy-item.locked .trophy-item-status {
+            color: rgba(255,255,255,0.4);
+        }
+        .trophy-close-hint {
+            margin-top: 40px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* TROPHY TOAST */
+        #trophy-toast {
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150px);
+            background: linear-gradient(135deg, rgba(30, 25, 15, 0.98), rgba(50, 40, 20, 0.98));
+            border: 2px solid #b8860b;
+            padding: 15px 30px;
+            border-radius: 8px;
+            z-index: 7000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 30px rgba(255,215,0,0.2), inset 0 1px 0 rgba(255,215,0,0.3);
+            transition: transform 0.5s var(--ease-out);
+        }
+        #trophy-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        .trophy-icon {
+            font-size: 32px;
+            filter: drop-shadow(0 0 10px rgba(255,215,0,0.5));
+        }
+        .trophy-content {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .trophy-title {
+            font-size: 11px;
+            color: #ffd700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .trophy-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* PROJECT IMAGE IN POPUP */
+        .pop-image {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .pop-gallery {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .pop-gallery img {
+            height: 80px;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .pop-gallery img:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        /* VITA MODE STATUS BAR ADJUSTMENTS */
+        body.vita-mode #status-bar {
+            transform: scale(0.7);
+            transform-origin: top right;
+            top: 5px;
+            right: 15px;
+        }
+
         /* CATEGORIES */
-        #category-container { position: absolute; top: 20%; left: 0; width: 100%; height: 100px; overflow: visible; }
-        #category-bar { position: absolute; left: var(--focus-col); display: flex; transition: transform 0.4s var(--ease-out); }
+        #category-container { 
+            position: absolute; top: 20%; left: 0; width: 100%; height: 100px; overflow: visible; 
+            transition: all 0.8s var(--ease-out);
+        }
+        #category-bar { position: absolute; left: var(--focus-col); display: flex; transition: transform 0.4s var(--ease-out), left 0.8s var(--ease-out); }
         .cat-icon {
             width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            opacity: 0.4; transform: scale(0.8); transition: all 0.4s var(--ease-out);
+            opacity: 0.4; transform: scale(0.8); transition: all 0.4s var(--ease-out), width 0.8s var(--ease-out);
         }
         .cat-icon.active { opacity: 1; transform: scale(1.3); filter: drop-shadow(0 0 20px rgba(255,255,255,0.5)); }
         .cat-icon svg { width: 40px; height: 40px; fill: white; }
@@ -149,7 +845,7 @@
             position: absolute; left: var(--focus-col); top: 35%;
             display: flex; flex-direction: column; width: 500px;
             opacity: 0; pointer-events: none;
-            transition: opacity 0.3s, transform 0.4s var(--ease-out);
+            transition: opacity 0.3s, transform 0.4s var(--ease-out), top 0.8s var(--ease-out), left 0.8s var(--ease-out);
             transform-origin: left center;
         }
         .item-column.active-col { opacity: 1; pointer-events: auto; }
@@ -207,16 +903,14 @@
         .contact-form textarea {
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
             color: white; padding: 12px; border-radius: 8px; 
-            font-family: var(--font-main); /* FIX: Force Font */
+            font-family: var(--font-main); 
             font-size: 14px;
             outline: none; transition: 0.3s;
         }
-        
         .contact-form input:focus, 
         .contact-form textarea:focus {
             background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4);
         }
-        
         .contact-form textarea { resize: none; height: 100px; }
         
         .contact-btn {
@@ -224,15 +918,15 @@
             border: 1px solid rgba(0, 255, 128, 0.3); padding: 12px;
             border-radius: 8px; font-weight: 700; cursor: pointer;
             text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
-            font-family: var(--font-main); /* FIX: Force Font */
+            font-family: var(--font-main); 
         }
         .contact-btn:hover { background: rgba(0, 255, 128, 0.2); box-shadow: 0 0 15px rgba(0,255,128,0.2); }
 
-        /* MOBILE CONTROLS */
+        /* MOBILE CONTROLS (Enhanced PS Vita Style) */
         #mobile-controls {
             display: none; position: fixed; bottom: 0; left: 0; width: 100%;
             height: 220px; z-index: 8000; pointer-events: none;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
         }
         .d-pad {
             position: absolute; bottom: 30px; left: 30px;
@@ -240,13 +934,24 @@
         }
         .d-btn {
             position: absolute; width: 50px; height: 50px;
-            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255,255,255,0.2);
             border-radius: 14px; display: flex; justify-content: center; align-items: center;
-            color: white; backdrop-filter: blur(10px); transition: transform 0.1s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            color: white; backdrop-filter: blur(15px) saturate(150%);
+            transition: all 0.15s var(--ease-out);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            cursor: pointer;
         }
-        .d-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
-        .d-btn svg { width: 24px; height: 24px; stroke: white; stroke-width: 2; }
+        .d-btn:active { 
+            transform: scale(0.92) translateY(2px); 
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .d-btn:hover {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            border-color: rgba(255,255,255,0.4);
+        }
+        .d-btn svg { width: 24px; height: 24px; stroke: white; stroke-width: 2.5; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
         .d-up { top: 0; left: 55px; }
         .d-down { bottom: 0; left: 55px; }
         .d-left { top: 55px; left: 0; }
@@ -260,17 +965,41 @@
         .c-btn {
             width: 65px; height: 65px; border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);
-            transition: transform 0.1s; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.25); 
+            backdrop-filter: blur(15px) saturate(150%);
+            transition: all 0.15s var(--ease-out); 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+            cursor: pointer;
         }
-        .c-btn svg { width: 28px; height: 28px; stroke-width: 2.5; }
-        .c-btn:active { transform: scale(0.9); }
-        .btn-enter { background: rgba(0, 255, 128, 0.05); border-color: rgba(0, 255, 128, 0.3); }
+        .c-btn svg { width: 28px; height: 28px; stroke-width: 2.5; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }
+        .c-btn:active { transform: scale(0.92) translateY(2px); }
+        .btn-enter { 
+            background: linear-gradient(145deg, rgba(0, 255, 128, 0.12), rgba(0, 255, 128, 0.05)); 
+            border-color: rgba(0, 255, 128, 0.4); 
+        }
         .btn-enter svg { stroke: #00ffaa; }
-        .btn-enter:active { background: rgba(0, 255, 128, 0.2); box-shadow: 0 0 15px rgba(0,255,128,0.3); }
-        .btn-back { background: rgba(255, 50, 50, 0.05); border-color: rgba(255, 50, 50, 0.3); margin-bottom: 20px; }
+        .btn-enter:active { 
+            background: rgba(0, 255, 128, 0.25); 
+            box-shadow: 0 0 20px rgba(0,255,128,0.4), inset 0 2px 4px rgba(0,0,0,0.2); 
+        }
+        .btn-enter:hover {
+            background: linear-gradient(145deg, rgba(0, 255, 128, 0.2), rgba(0, 255, 128, 0.1));
+            box-shadow: 0 0 25px rgba(0,255,128,0.3);
+        }
+        .btn-back { 
+            background: linear-gradient(145deg, rgba(255, 50, 50, 0.12), rgba(255, 50, 50, 0.05)); 
+            border-color: rgba(255, 50, 50, 0.4); 
+            margin-bottom: 20px; 
+        }
         .btn-back svg { stroke: #ff5555; }
-        .btn-back:active { background: rgba(255, 50, 50, 0.2); box-shadow: 0 0 15px rgba(255,50,50,0.3); }
+        .btn-back:active { 
+            background: rgba(255, 50, 50, 0.25); 
+            box-shadow: 0 0 20px rgba(255,50,50,0.4), inset 0 2px 4px rgba(0,0,0,0.2); 
+        }
+        .btn-back:hover {
+            background: linear-gradient(145deg, rgba(255, 50, 50, 0.2), rgba(255, 50, 50, 0.1));
+            box-shadow: 0 0 25px rgba(255,50,50,0.3);
+        }
 
         @media (max-width: 768px) {
             :root { --focus-col: 20px; --row-height: 60px; }
@@ -280,6 +1009,9 @@
             .boot-logo { font-size: 36px; }
             #toast { bottom: auto; top: 20px; right: -100%; }
             #toast.show { right: 0; }
+            /* Disable Vita Mode logic on mobile */
+            body.vita-mode #xmb-interface { width: 100% !important; height: 100% !important; transform: none !important; border: none !important; box-shadow: none !important; }
+            body.vita-mode #vita-chassis { display: none !important; }
         }
     </style>
 </head>
@@ -296,15 +1028,163 @@
         </div>
     </div>
 
+    <!-- TROPHY TOAST -->
+    <div id="trophy-toast">
+        <div class="trophy-icon">🏆</div>
+        <div class="trophy-content">
+            <div class="trophy-title">Trophy Unlocked</div>
+            <div class="trophy-name" id="trophy-name">Achievement</div>
+        </div>
+    </div>
+
+    <!-- TROPHY SECTION -->
+    <div id="trophy-section">
+        <div class="trophy-section-title">🏆 TROPHIES</div>
+        <div class="trophy-list" id="trophy-list">
+            <!-- Populated by JS -->
+        </div>
+        <div class="trophy-close-hint">[ESC] or [SHIFT + =] to close</div>
+    </div>
+
+    <!-- VITA CHASSIS SVG OVERLAY -->
+    <!-- This SVG is shown when body has class "vita-mode" -->
+    <svg id="vita-chassis" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="chassisGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#2a2a2a;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#050505;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="silverTrim" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#666;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#ccc;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#666;stop-opacity:1" />
+            </linearGradient>
+            <filter id="btnShadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                <feOffset dx="0" dy="2" result="offsetblur"/>
+                <feComponentTransfer>
+                    <feFuncA type="linear" slope="0.5"/>
+                </feComponentTransfer>
+                <feMerge> 
+                    <feMergeNode in="offsetblur"/>
+                    <feMergeNode in="SourceGraphic"/> 
+                </feMerge>
+            </filter>
+        </defs>
+        
+        <!-- Main Body -->
+        <path d="M 280,30 H 920 C 1080,30 1170,100 1170,300 C 1170,500 1080,570 920,570 H 280 C 120,570 30,500 30,300 C 30,100 120,30 280,30 Z" 
+              fill="url(#chassisGrad)" stroke="#333" stroke-width="2"/>
+        
+        <!-- Silver Trim -->
+        <path d="M 280,25 H 920 C 1085,25 1175,95 1175,300 C 1175,505 1085,575 920,575 H 280 C 115,575 25,505 25,300 C 25,95 115,25 280,25 Z" 
+              fill="none" stroke="url(#silverTrim)" stroke-width="5" opacity="0.8"/>
+
+        <!-- Screen Area (Hole) - Set to fill-opacity="0" to let underlying UI show through -->
+        <rect x="220" y="85" width="760" height="430" rx="2" ry="2" fill="#000" fill-opacity="0" stroke="#111" stroke-width="4"/>
+
+        <!-- LEFT CONTROLS -->
+        <circle cx="130" cy="220" r="75" fill="#111" filter="url(#btnShadow)"/>
+        <g transform="translate(130, 220)" fill="#222" stroke="#111" stroke-width="1">
+            <path d="M -18,-55 L 18,-55 L 18,-18 L 55,-18 L 55,18 L 18,18 L 18,55 L -18,55 L -18,18 L -55,18 L -55,-18 L -18,-18 Z" 
+                  filter="url(#btnShadow)"/>
+            <path d="M 0,-45 L -8,-35 H 8 Z" fill="#444"/>
+            <path d="M 0,45 L -8,35 H 8 Z" transform="rotate(180)" fill="#444"/>
+            <path d="M -45,0 L -35,-8 V 8 Z" fill="#444"/>
+            <path d="M 45,0 L 35,-8 V 8 Z" transform="rotate(180)" fill="#444"/>
+        </g>
+        <circle cx="160" cy="400" r="45" fill="#151515" stroke="#000" stroke-width="2" filter="url(#btnShadow)"/>
+        <circle cx="160" cy="400" r="35" fill="radial-gradient(circle at 30% 30%, #444, #111)"/>
+
+        <!-- RIGHT CONTROLS -->
+        <circle cx="1070" cy="220" r="75" fill="#111" filter="url(#btnShadow)"/>
+        <circle cx="1070" cy="170" r="18" fill="rgba(0,0,0,0.5)" stroke="#333"/>
+        <path d="M 1070,162 L 1078,176 H 1062 Z" fill="none" stroke="#00d2ff" stroke-width="2"/>
+        <circle cx="1120" cy="220" r="18" fill="rgba(0,0,0,0.5)" stroke="#333"/>
+        <circle cx="1120" cy="220" r="8" fill="none" stroke="#ff4444" stroke-width="2"/>
+        <circle cx="1070" cy="270" r="18" fill="rgba(0,0,0,0.5)" stroke="#333"/>
+        <path d="M 1066,266 L 1074,274 M 1074,266 L 1066,274" stroke="#8888ff" stroke-width="2"/>
+        <circle cx="1020" cy="220" r="18" fill="rgba(0,0,0,0.5)" stroke="#333"/>
+        <rect x="1012" y="212" width="16" height="16" fill="none" stroke="#ff77cc" stroke-width="2"/>
+
+        <circle cx="1040" cy="400" r="45" fill="#151515" stroke="#000" stroke-width="2" filter="url(#btnShadow)"/>
+        <circle cx="1040" cy="400" r="35" fill="radial-gradient(circle at 30% 30%, #444, #111)"/>
+
+        <!-- Buttons -->
+        <circle cx="120" cy="480" r="12" fill="#111" stroke="#333"/>
+        <path d="M 115,480 H 125" stroke="#666" stroke-width="2"/>
+        <ellipse cx="1060" cy="480" rx="15" ry="8" fill="#111" stroke="#333"/>
+        <ellipse cx="1120" cy="480" rx="15" ry="8" fill="#111" stroke="#333"/>
+
+        <!-- Text -->
+        <text x="600" y="550" font-family="Arial, sans-serif" font-size="16" fill="#888" text-anchor="middle" letter-spacing="2" font-weight="bold" font-style="italic">PSVITA</text>
+        <text x="350" y="70" font-family="Arial, sans-serif" font-size="10" fill="#666" text-anchor="middle" letter-spacing="1">SONY</text>
+        
+        <!-- Highlights -->
+        <path d="M 300,40 Q 600,60 900,40" stroke="rgba(255,255,255,0.1)" stroke-width="4" fill="none"/>
+    </svg>
+
     <div id="boot-screen">
         <div class="boot-logo">Dave Jacob</div>
         <div class="boot-btn">ENTER</div>
+    </div>
+
+    <!-- PS3/Vita Loading Screen -->
+    <div id="loading-screen">
+        <div class="ribbon-container">
+            <div class="ribbon"></div>
+            <div class="ribbon"></div>
+            <div class="ribbon"></div>
+            <div class="ribbon"></div>
+            <div class="ribbon"></div>
+            <div class="ribbon-converge"></div>
+            <div class="ribbon-converge"></div>
+            <div class="ribbon-converge"></div>
+            <div class="ribbon-converge"></div>
+        </div>
+        <div class="loading-title">Dave Jacob</div>
+        <div class="loading-subtitle">Portfolio</div>
+        <div class="loading-indicator">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="loading-status">Loading System</div>
+        </div>
+    </div>
+
+    <!-- PS3-Style Shutdown Overlay -->
+    <div id="shutdown-overlay">
+        <div class="shutdown-text">Shutting down...</div>
+        <div class="shutdown-spinner"></div>
+        <div class="shutdown-wave"></div>
     </div>
 
     <div id="xmb-interface">
         <div id="bg-wrapper"></div>
         <div id="vignette"></div>
         <canvas id="wave-canvas"></canvas>
+
+        <!-- STATUS BAR (Frutiger Aero Style) -->
+        <div id="status-bar">
+            <div class="status-item" id="wifi-status">
+                <div class="wifi-bars">
+                    <div class="wifi-bar"></div>
+                    <div class="wifi-bar"></div>
+                    <div class="wifi-bar"></div>
+                    <div class="wifi-bar"></div>
+                </div>
+            </div>
+            <div class="status-divider"></div>
+            <div class="status-item battery-container" id="battery-status">
+                <div class="battery-icon">
+                    <div class="battery-level" id="battery-level" style="width: 100%"></div>
+                </div>
+                <span id="battery-percent">100%</span>
+            </div>
+        </div>
 
         <div id="clock-widget">
             <div id="clock-time">00:00</div>
@@ -331,6 +1211,13 @@
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
                 </div>
                 <div class="item-text"><h3>Dave Jacob</h3><p>Profile & Bio</p></div>
+            </div>
+            <!-- RESUME CARD -->
+            <div class="item-card" data-link="resume.pdf" data-t="Resume" data-c="Preparing Download...<br><br>If download doesn't start, please check pop-up blocker.">
+                <div class="item-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div class="item-text"><h3>Resume</h3><p>Download PDF</p></div>
             </div>
             <!-- CONTACT CARD -->
             <div class="item-card" id="contact-card" data-t="Contact Me" data-c="">
@@ -395,6 +1282,20 @@
                 </div>
                 <div class="item-text"><h3>Audio</h3><p>Adjust Volume</p></div>
             </div>
+            <!-- THEME SWITCHER -->
+            <div class="item-card" id="theme-card" data-t="Theme Color" data-c="Press <strong>ENTER</strong> to cycle background themes.">
+                <div class="item-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
+                </div>
+                <div class="item-text"><h3>Theme</h3><p>Change Color</p></div>
+            </div>
+            <!-- CREDITS -->
+            <div class="item-card" id="credits-card" data-t="Credits" data-c="<strong>Created by Dave Jacob</strong><br>Design inspired by Sony XMB.<br><br><strong>Pro Tip:</strong><br>Try the code: ↑ ↑ ↓ ↓ ← → ← → B A">
+                <div class="item-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </div>
+                <div class="item-text"><h3>Credits</h3><p>About</p></div>
+            </div>
             <div class="item-card" id="shutdown-card" data-t="Shutdown" data-c="Powering off system...">
                 <div class="item-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.929 4.929 19.07 19.071"/><circle cx="12" cy="12" r="10"/></svg>
@@ -439,6 +1340,21 @@
             </form>
         `;
 
+        /* --- THEMES --- */
+        const themes = [
+            "linear-gradient(to bottom, #001219 0%, #005f73 50%, #0a9396 100%)", // Original
+            "linear-gradient(to bottom, #1a0b00 0%, #4a2500 50%, #804000 100%)", // Amber
+            "linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%)", // Purple
+            "linear-gradient(to bottom, #000000 0%, #202020 50%, #404040 100%)", // Mono
+            "linear-gradient(to bottom, #190000 0%, #450000 50%, #700000 100%)"  // Crimson
+        ];
+        let themeIndex = 0;
+
+        /* --- KONAMI --- */
+        const konami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+        let kPos = 0;
+        let isVitaMode = false;
+
         /* --- STATE --- */
         let systemVol = 0.5;
         const bgMusic = new Audio('menu.mp3');
@@ -464,6 +1380,276 @@
             setTimeout(() => t.classList.remove('show'), 4000);
         }
 
+        /* --- TROPHY/ACHIEVEMENT SYSTEM --- */
+        const unlockedTrophies = new Set();
+        
+        // All available trophies
+        const allTrophies = [
+            { id: 'cheat', name: 'Cheat Code Entered', desc: 'Enter the Konami code', icon: '🎮' },
+            { id: 'controller', name: 'Controller Connected', desc: 'Connect a gamepad', icon: '🕹️' },
+            { id: 'projects', name: 'Viewed All Projects', desc: 'Check out every project', icon: '📁' },
+            { id: 'theme', name: 'Theme Changer', desc: 'Change the background theme', icon: '🎨' },
+            { id: 'contact', name: 'Reached Out', desc: 'Send a message via contact form', icon: '✉️' },
+            { id: 'music', name: 'Music Lover', desc: 'Check the Last.fm card', icon: '🎵' },
+        ];
+        
+        function unlockTrophy(name) {
+            if (unlockedTrophies.has(name)) return;
+            unlockedTrophies.add(name);
+            
+            // Play trophy sound
+            playTrophySound();
+            
+            // Show trophy toast
+            document.getElementById('trophy-name').innerText = name;
+            const trophy = document.getElementById('trophy-toast');
+            trophy.classList.add('show');
+            setTimeout(() => trophy.classList.remove('show'), 4000);
+        }
+        
+        function showTrophySection() {
+            const list = document.getElementById('trophy-list');
+            list.innerHTML = '';
+            
+            allTrophies.forEach(t => {
+                const unlocked = unlockedTrophies.has(t.name);
+                list.innerHTML += `
+                    <div class="trophy-item ${unlocked ? '' : 'locked'}">
+                        <div class="trophy-item-icon">${t.icon}</div>
+                        <div class="trophy-item-info">
+                            <div class="trophy-item-name">${t.name}</div>
+                            <div class="trophy-item-desc">${t.desc}</div>
+                        </div>
+                        <div class="trophy-item-status">${unlocked ? 'Unlocked' : 'Locked'}</div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('trophy-section').classList.add('active');
+        }
+        
+        function hideTrophySection() {
+            document.getElementById('trophy-section').classList.remove('active');
+        }
+        
+        function playTrophySound() {
+            const osc = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            osc2.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(1100, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.2);
+            
+            osc2.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc2.frequency.setValueAtTime(550, audioCtx.currentTime + 0.1);
+            osc2.frequency.setValueAtTime(660, audioCtx.currentTime + 0.2);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            
+            osc.start();
+            osc2.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+            osc2.stop(audioCtx.currentTime + 0.5);
+        }
+
+        /* --- BATTERY STATUS --- */
+        async function initBattery() {
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    updateBattery(battery);
+                    battery.addEventListener('levelchange', () => updateBattery(battery));
+                    battery.addEventListener('chargingchange', () => updateBattery(battery));
+                } catch(e) {
+                    console.log('Battery API not available');
+                }
+            }
+        }
+        
+        function updateBattery(battery) {
+            const level = Math.round(battery.level * 100);
+            const levelEl = document.getElementById('battery-level');
+            const percentEl = document.getElementById('battery-percent');
+            
+            levelEl.style.width = level + '%';
+            percentEl.innerText = level + '%';
+            
+            levelEl.classList.remove('low', 'charging');
+            if (battery.charging) {
+                levelEl.classList.add('charging');
+            } else if (level <= 20) {
+                levelEl.classList.add('low');
+            }
+        }
+
+        /* --- BOOT SOUND (Orchestral Swell) --- */
+        function playBootSound() {
+            const now = audioCtx.currentTime;
+            const duration = 2.5;
+            
+            // Create multiple oscillators for orchestral effect
+            const frequencies = [130.81, 164.81, 196, 261.63, 329.63]; // C major chord
+            
+            frequencies.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const filter = audioCtx.createBiquadFilter();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(200, now);
+                filter.frequency.exponentialRampToValueAtTime(2000, now + 1);
+                filter.frequency.exponentialRampToValueAtTime(500, now + duration);
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.08, now + 0.5);
+                gain.gain.linearRampToValueAtTime(0.12, now + 1.2);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(now + i * 0.1);
+                osc.stop(now + duration);
+            });
+            
+            // Add shimmer
+            const noise = audioCtx.createOscillator();
+            const noiseGain = audioCtx.createGain();
+            noise.type = 'triangle';
+            noise.frequency.setValueAtTime(4000, now);
+            noiseGain.gain.setValueAtTime(0, now);
+            noiseGain.gain.linearRampToValueAtTime(0.02, now + 1);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            noise.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noise.start(now);
+            noise.stop(now + duration);
+        }
+
+        /* --- GAMEPAD SUPPORT --- */
+        let gamepadIndex = null;
+        let lastGamepadState = {};
+        
+        window.addEventListener('gamepadconnected', (e) => {
+            gamepadIndex = e.gamepad.index;
+            showToast('Controller Connected', e.gamepad.id.split('(')[0]);
+            unlockTrophy('Controller Connected');
+        });
+        
+        window.addEventListener('gamepaddisconnected', () => {
+            gamepadIndex = null;
+            showToast('Controller', 'Disconnected');
+        });
+        
+        function pollGamepad() {
+            if (gamepadIndex === null) {
+                requestAnimationFrame(pollGamepad);
+                return;
+            }
+            
+            const gamepad = navigator.getGamepads()[gamepadIndex];
+            if (!gamepad) {
+                requestAnimationFrame(pollGamepad);
+                return;
+            }
+            
+            // D-pad or left stick
+            const threshold = 0.5;
+            const axes = gamepad.axes;
+            const buttons = gamepad.buttons;
+            
+            // Left stick / D-pad navigation
+            if (axes[1] < -threshold && !lastGamepadState.up) {
+                triggerKey('ArrowUp');
+                lastGamepadState.up = true;
+            } else if (axes[1] >= -threshold) {
+                lastGamepadState.up = false;
+            }
+            
+            if (axes[1] > threshold && !lastGamepadState.down) {
+                triggerKey('ArrowDown');
+                lastGamepadState.down = true;
+            } else if (axes[1] <= threshold) {
+                lastGamepadState.down = false;
+            }
+            
+            if (axes[0] < -threshold && !lastGamepadState.left) {
+                triggerKey('ArrowLeft');
+                lastGamepadState.left = true;
+            } else if (axes[0] >= -threshold) {
+                lastGamepadState.left = false;
+            }
+            
+            if (axes[0] > threshold && !lastGamepadState.right) {
+                triggerKey('ArrowRight');
+                lastGamepadState.right = true;
+            } else if (axes[0] <= threshold) {
+                lastGamepadState.right = false;
+            }
+            
+            // A/Cross button (index 0) - Enter
+            if (buttons[0]?.pressed && !lastGamepadState.a) {
+                triggerKey('Enter');
+                lastGamepadState.a = true;
+            } else if (!buttons[0]?.pressed) {
+                lastGamepadState.a = false;
+            }
+            
+            // B/Circle button (index 1) - Back
+            if (buttons[1]?.pressed && !lastGamepadState.b) {
+                triggerKey('Backspace');
+                lastGamepadState.b = true;
+            } else if (!buttons[1]?.pressed) {
+                lastGamepadState.b = false;
+            }
+            
+            // D-pad buttons (12-15)
+            if (buttons[12]?.pressed && !lastGamepadState.dUp) {
+                triggerKey('ArrowUp');
+                lastGamepadState.dUp = true;
+            } else if (!buttons[12]?.pressed) {
+                lastGamepadState.dUp = false;
+            }
+            
+            if (buttons[13]?.pressed && !lastGamepadState.dDown) {
+                triggerKey('ArrowDown');
+                lastGamepadState.dDown = true;
+            } else if (!buttons[13]?.pressed) {
+                lastGamepadState.dDown = false;
+            }
+            
+            if (buttons[14]?.pressed && !lastGamepadState.dLeft) {
+                triggerKey('ArrowLeft');
+                lastGamepadState.dLeft = true;
+            } else if (!buttons[14]?.pressed) {
+                lastGamepadState.dLeft = false;
+            }
+            
+            if (buttons[15]?.pressed && !lastGamepadState.dRight) {
+                triggerKey('ArrowRight');
+                lastGamepadState.dRight = true;
+            } else if (!buttons[15]?.pressed) {
+                lastGamepadState.dRight = false;
+            }
+            
+            requestAnimationFrame(pollGamepad);
+        }
+        pollGamepad();
+
+        /* --- TRACK ACHIEVEMENTS --- */
+        let viewedProjects = new Set();
+        let viewedCategories = new Set();
+
         /* --- CONTACT FORM HANDLING --- */
         async function handleFormSubmit(e) {
             e.preventDefault();
@@ -484,6 +1670,7 @@
                 
                 if (response.ok) {
                     showToast('Success', 'Message Sent');
+                    unlockTrophy('Reached Out');
                     closePopup();
                 } else {
                     showToast('Error', 'Failed to send');
@@ -499,20 +1686,45 @@
 
         /* --- BOOT SEQUENCE --- */
         document.querySelector('.boot-btn').addEventListener('click', () => {
-            bgMusic.play().catch(() => console.log('Audio Autoplay Blocked'));
+            // Don't play music yet - wait for loading to complete
             audioCtx.resume();
             
+            // Play boot sound
+            playBootSound();
+            
+            // Hide boot screen, show loading screen
             document.getElementById('boot-screen').style.opacity = 0;
             setTimeout(() => {
                 document.getElementById('boot-screen').style.display = 'none';
-                const ui = document.getElementById('xmb-interface');
-                ui.style.display = 'block';
-                void ui.offsetWidth;
-                ui.classList.add('active');
                 
-                showToast('System Online', 'Welcome Dave');
-                updateLayout();
-                fetchLastFm();
+                // Show loading screen
+                const loadingScreen = document.getElementById('loading-screen');
+                loadingScreen.style.display = 'flex';
+                setTimeout(() => loadingScreen.classList.add('active'), 50);
+                
+                // Wait for animations then show interface
+                setTimeout(() => {
+                    loadingScreen.classList.remove('active');
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                        
+                        // Now show the interface and play music
+                        const ui = document.getElementById('xmb-interface');
+                        ui.style.display = 'block';
+                        void ui.offsetWidth;
+                        ui.classList.add('active');
+                        
+                        // Play music after loading
+                        bgMusic.play().catch(() => console.log('Audio Autoplay Blocked'));
+                        
+                        // Initialize battery status
+                        initBattery();
+                        
+                        showToast('System Online', 'Welcome Dave');
+                        updateLayout();
+                        fetchLastFm();
+                    }, 800);
+                }, 5000); // Total loading time
             }, 800);
         });
 
@@ -547,6 +1759,91 @@
 
         document.addEventListener('keydown', (e) => {
             if(state === "SHUTDOWN") return;
+            
+            // TROPHY SECTION - Shift + = (plus key)
+            if (e.shiftKey && (e.key === '+' || e.key === '=')) {
+                const trophySection = document.getElementById('trophy-section');
+                if (trophySection.classList.contains('active')) {
+                    hideTrophySection();
+                } else {
+                    showTrophySection();
+                }
+                return;
+            }
+            
+            // Close trophy section with Escape
+            if (e.key === 'Escape' && document.getElementById('trophy-section').classList.contains('active')) {
+                hideTrophySection();
+                return;
+            }
+
+            // ESCAPE KEY - Exit Vita Mode
+            if (e.key === 'Escape' && isVitaMode && state === "MENU") {
+                isVitaMode = false;
+                showToast('DESKTOP MODE', 'Returning...');
+                
+                // Trigger exit animation
+                const xmbInterface = document.getElementById('xmb-interface');
+                const vitaChassis = document.getElementById('vita-chassis');
+                xmbInterface.classList.remove('tilt-ready');
+                vitaChassis.classList.remove('tilt-ready');
+                xmbInterface.classList.add('vita-exit');
+                vitaChassis.classList.add('vita-exit');
+                
+                // Remove vita-mode class after animation
+                setTimeout(() => {
+                    document.body.classList.remove('vita-mode');
+                    xmbInterface.classList.remove('vita-exit');
+                    vitaChassis.classList.remove('vita-exit');
+                    xmbInterface.style.transform = '';
+                    vitaChassis.style.transform = '';
+                }, 1000);
+                
+                playTone('back');
+                return;
+            }
+
+            // KONAMI CODE
+            if (e.key === konami[kPos]) {
+                kPos++;
+                if (kPos === konami.length) {
+                    isVitaMode = !isVitaMode;
+                    if(isVitaMode) {
+                        showToast('HANDHELD MODE', 'PS Vita Active');
+                        document.body.classList.add('vita-mode');
+                        playTone('select');
+                        
+                        // Trophy for entering cheat code
+                        unlockTrophy('Cheat Code Entered');
+                        
+                        // After animation, enable JS tilt control
+                        setTimeout(() => {
+                            document.getElementById('xmb-interface').classList.add('tilt-ready');
+                            document.getElementById('vita-chassis').classList.add('tilt-ready');
+                        }, 1300);
+                    } else {
+                        showToast('DESKTOP MODE', 'Returning...');
+                        
+                        // Trigger exit animation
+                        const xmbInterface = document.getElementById('xmb-interface');
+                        const vitaChassis = document.getElementById('vita-chassis');
+                        xmbInterface.classList.remove('tilt-ready');
+                        vitaChassis.classList.remove('tilt-ready');
+                        xmbInterface.classList.add('vita-exit');
+                        vitaChassis.classList.add('vita-exit');
+                        
+                        // Remove vita-mode class after animation
+                        setTimeout(() => {
+                            document.body.classList.remove('vita-mode');
+                            xmbInterface.classList.remove('vita-exit');
+                            vitaChassis.classList.remove('vita-exit');
+                            xmbInterface.style.transform = '';
+                            vitaChassis.style.transform = '';
+                        }, 1000);
+                    }
+                    kPos = 0;
+                }
+            } else { kPos = 0; }
 
             // Allow typing in Contact Form without triggering Nav
             if (state === "POPUP") {
@@ -578,7 +1875,7 @@
 
                 if((e.code === 'Space' || e.key === 'Enter') && activeItem.dataset.link) {
                     window.open(activeItem.dataset.link, '_blank');
-                    showToast('Opening Link', 'GitHub');
+                    showToast('Opening Link', 'External');
                 }
                 return;
             }
@@ -602,7 +1899,20 @@
             } else if(e.key === 'Enter') {
                 if(currentItem.id === 'shutdown-card') {
                     shutdownSystem();
-                } else {
+                } 
+                else if(currentItem.id === 'theme-card') {
+                    themeIndex = (themeIndex + 1) % themes.length;
+                    document.documentElement.style.setProperty('--bg-gradient', themes[themeIndex]);
+                    showToast('Theme Changed', 'Visuals Updated');
+                    playTone('select');
+                    unlockTrophy('Theme Changer');
+                }
+                else if(currentItem.id === 'music-card') {
+                    playTone('select');
+                    openPopup(currentItem);
+                    unlockTrophy('Music Lover');
+                }
+                else {
                     playTone('select');
                     openPopup(currentItem);
                 }
@@ -611,6 +1921,30 @@
             if(moved) {
                 playTone('move');
                 updateLayout();
+            }
+        });
+
+        /* --- SWIPE GESTURES --- */
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        });
+
+        document.addEventListener('touchend', e => {
+            if(state !== "MENU") return;
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
+            
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (Math.abs(diffX) > 50) triggerKey(diffX > 0 ? 'ArrowLeft' : 'ArrowRight');
+            } else {
+                if (Math.abs(diffY) > 50) triggerKey(diffY > 0 ? 'ArrowUp' : 'ArrowDown');
             }
         });
 
@@ -631,9 +1965,35 @@
             if (item.id === 'contact-card') {
                 document.getElementById('pop-content').innerHTML = CONTACT_FORM_HTML;
             } else {
-                let content = item.dataset.c;
+                let content = '';
+                
+                // Add featured image if available
+                if (item.dataset.img) {
+                    content += `<img src="${item.dataset.img}" class="pop-image" alt="${item.dataset.t}">`;
+                }
+                
+                // Add gallery if available
+                if (item.dataset.gallery) {
+                    const images = item.dataset.gallery.split(',');
+                    content += '<div class="pop-gallery">';
+                    images.forEach(img => {
+                        content += `<img src="${img.trim()}" onclick="this.parentElement.previousElementSibling.src='${img.trim()}'">`;
+                    });
+                    content += '</div>';
+                }
+                
+                content += item.dataset.c;
                 if(item.id === 'audio-settings-card') content = content.replace("50%", Math.round(systemVol*100) + "%");
                 document.getElementById('pop-content').innerHTML = content;
+            }
+            
+            // Track viewed projects for trophy
+            if (item.closest('#col-2')) {
+                viewedProjects.add(item.dataset.t);
+                const totalProjects = document.querySelectorAll('#col-2 .item-card').length;
+                if (viewedProjects.size >= totalProjects) {
+                    unlockTrophy('Viewed All Projects');
+                }
             }
 
             document.getElementById('xmb-interface').classList.add('blurred');
@@ -649,11 +2009,27 @@
         function shutdownSystem() {
             state = "SHUTDOWN";
             showToast('System', 'Shutting Down...');
-            document.body.style.opacity = '0';
+            
+            // Show PS3-style shutdown overlay
+            const shutdownOverlay = document.getElementById('shutdown-overlay');
+            shutdownOverlay.classList.add('active');
+            
+            // Black out the screen area after a brief delay
+            setTimeout(() => {
+                document.getElementById('xmb-interface').classList.add('power-off');
+            }, 500);
+            
+            // Fade out music
             const fade = setInterval(() => {
                 if(bgMusic.volume > 0.05) bgMusic.volume -= 0.05;
                 else { bgMusic.volume = 0; bgMusic.pause(); clearInterval(fade); }
             }, 100);
+            
+            // Complete shutdown after animation
+            setTimeout(() => {
+                document.querySelector('.shutdown-text').textContent = 'System powered off';
+                document.querySelector('.shutdown-spinner').style.display = 'none';
+            }, 3000);
         }
 
         function playTone(type) {
@@ -702,16 +2078,49 @@
         }
         setInterval(fetchLastFm, 60000); 
 
-        /* --- VISUALS --- */
+        /* --- VISUALS (PARTICLES + WAVE) --- */
         const canvas = document.getElementById('wave-canvas');
         const ctx = canvas.getContext('2d');
         let t = 0;
+        
+        // Particle Init
+        const particles = [];
+        for(let i=0; i<50; i++) {
+            particles.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2,
+                alpha: Math.random()
+            });
+        }
+
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; updateLayout(); }
         window.addEventListener('resize', resize);
         resize();
 
         function draw() {
             ctx.clearRect(0,0,canvas.width, canvas.height);
+            
+            // Draw Particles
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if(p.x < 0) p.x = canvas.width;
+                if(p.x > canvas.width) p.x = 0;
+                if(p.y < 0) p.y = canvas.height;
+                if(p.y > canvas.height) p.y = 0;
+                
+                ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.4})`;
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw Waves
             const cy = canvas.height / 2;
             for(let i=0; i<3; i++) {
                 ctx.beginPath();
@@ -723,7 +2132,9 @@
                 }
                 ctx.stroke();
             }
+            
             t += 0.02;
+
             requestAnimationFrame(draw);
         }
         draw();
@@ -733,7 +2144,34 @@
         const dot = document.getElementById('cursor-dot');
         const ring = document.getElementById('cursor-ring');
         
-        document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+        document.addEventListener('mousemove', e => { 
+            mx = e.clientX; 
+            my = e.clientY; 
+            
+            // Add 3D tilt effect in Vita mode - both screen and chassis move together
+            if(isVitaMode) {
+                const xmbInterface = document.getElementById('xmb-interface');
+                const vitaChassis = document.getElementById('vita-chassis');
+                
+                // Only apply tilt after animation is done
+                if (!xmbInterface.classList.contains('tilt-ready')) return;
+                
+                // Calculate tilt based on mouse position (normalized to -1 to 1)
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const tiltX = ((my - centerY) / centerY) * 6; // Max 6 degrees
+                const tiltY = ((mx - centerX) / centerX) * -6; // Max 6 degrees (inverted)
+                
+                // Apply identical transform to both elements so they move as one unit
+                const tiltTransform = `translate(-50%, -50%) scale(0.95) rotateX(${15 + tiltX}deg) rotateY(${-8 + tiltY}deg) rotateZ(1deg)`;
+                
+                xmbInterface.style.transition = 'transform 0.15s ease-out';
+                vitaChassis.style.transition = 'transform 0.15s ease-out';
+                xmbInterface.style.transform = tiltTransform;
+                vitaChassis.style.transform = tiltTransform;
+            }
+        });
+        
         document.addEventListener('mouseover', e => {
             if(e.target.closest('.item-card') || e.target.closest('.cat-icon') || e.target.closest('.boot-btn')) 
                 document.body.classList.add('hovering');
